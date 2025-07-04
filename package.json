@@ -5,14 +5,15 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development npx tsx server/index.ts",
-    "build": "npx vite build",
+    "build": "npx vite build --mode production",
     "build:dev": "npx vite build --mode development",
     "build:vercel": "npx vite build --outDir client/dist",
     "vercel-build": "npx vite build",
     "build:server": "npx vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
-    "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "check": "tsc --noEmit",
+    "db:push": "drizzle-kit push",
+    "vercel-build": "npx vite build --mode production"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
