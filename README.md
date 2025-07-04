@@ -1,5 +1,7 @@
 # 🔥 SempreCheioApp V0 - Sistema de Gestão Empresarial
 
+> Deploy Ready - Vercel Compatible
+
 ## 📊 Versão Atual: 0.1.0 (Estável)
 
 ### 🎯 **SISTEMA COMPLETO E FUNCIONAL**
