@@ -48,6 +48,7 @@ function Router() {
           <Route path="/configuracoes" component={() => <Configuracoes />} />
           <Route path="/profissionais" component={ProfessionalConfig} />
           <Route path="/config-profissionais" component={() => <ConfigProfissionais />} />
+          <Route path="/whatsapp" component={() => <WhatsAppChannels />} />
           <Route path="/dashboard" component={Home} />
           <Route component={NotFound} />
         </>
