@@ -77,3 +77,6 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
 // Export for Vercel
 export default app;
+
+// Also export as handler for Vercel compatibility
+export const handler = app;
