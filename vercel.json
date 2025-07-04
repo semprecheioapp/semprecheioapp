@@ -25,6 +25,34 @@
       "destination": "/api/appointments"
     },
     {
+      "source": "/api/clients",
+      "destination": "/api/clients"
+    },
+    {
+      "source": "/api/specialties",
+      "destination": "/api/specialties"
+    },
+    {
+      "source": "/api/services",
+      "destination": "/api/services"
+    },
+    {
+      "source": "/api/customers",
+      "destination": "/api/customers"
+    },
+    {
+      "source": "/api/connections",
+      "destination": "/api/connections"
+    },
+    {
+      "source": "/api/professional-availability",
+      "destination": "/api/professional-availability"
+    },
+    {
+      "source": "/api/companies/metrics",
+      "destination": "/api/companies/metrics"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index"
     },
