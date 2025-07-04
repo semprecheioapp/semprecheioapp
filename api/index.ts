@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import express, { type Request, Response, NextFunction } from "express";
+import express from "express";
 import { registerRoutes } from "../server/routes";
 import helmet from "helmet";
 import cors from "cors";
@@ -75,20 +75,4 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 // Export for Vercel serverless functions
-export default async (req: VercelRequest, res: VercelResponse) => {
-  // Set environment variables for Vercel
-  if (!process.env.DATABASE_URL) {
-    console.error('DATABASE_URL not found in environment variables');
-  }
-
-  return new Promise((resolve, reject) => {
-    app(req as any, res as any, (err: any) => {
-      if (err) {
-        console.error('Express app error:', err);
-        reject(err);
-      } else {
-        resolve(undefined);
-      }
-    });
-  });
-};
+export default app;
