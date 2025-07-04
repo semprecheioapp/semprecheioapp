@@ -13,6 +13,18 @@
       "destination": "/api/auth/user"
     },
     {
+      "source": "/api/dashboard",
+      "destination": "/api/dashboard"
+    },
+    {
+      "source": "/api/professionals",
+      "destination": "/api/professionals"
+    },
+    {
+      "source": "/api/appointments",
+      "destination": "/api/appointments"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index"
     },
