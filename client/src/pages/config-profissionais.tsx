@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ interface Professional {
   phone?: string;
   specialtyId?: string;
   isActive: boolean;
+  clientId?: string;
 }
 
 interface ProfessionalAvailability {
@@ -100,7 +102,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
   });
 
   // Filtrar profissionais por empresa
-  const filteredProfessionals = professionals.filter((prof: any) => {
+  const filteredProfessionals = professionals.filter((prof: Professional) => {
     return !selectedClientId || selectedClientId === "all" || prof.clientId === selectedClientId;
   });
 
@@ -317,8 +319,8 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     // Preparar dados baseado no tipo de horário
     const baseData = {
       professionalId: formData.professionalId,
-      date: formData.date || null,
-      dayOfWeek: formData.dayOfWeek !== undefined ? formData.dayOfWeek : null,
+      date: formData.date || undefined,
+      dayOfWeek: formData.dayOfWeek !== undefined ? formData.dayOfWeek : undefined,
       isActive: formData.isActive,
       serviceId: formData.serviceId,
       customPrice: formData.customPrice,
@@ -388,7 +390,8 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       isActive: availability.isActive,
       serviceId: availability.serviceId,
       customPrice: availability.customPrice,
-      customDuration: availability.customDuration,
+      customDuration: availability.customDuration || 60,
+      slotDuration: availability.customDuration || 60,
     });
     setShowModal(true);
   };

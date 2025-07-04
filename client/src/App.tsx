@@ -1,3 +1,4 @@
+
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -40,13 +41,13 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={SuperAdminAgenda} />
+          <Route path="/" component={() => <SuperAdminAgenda />} />
           <Route path="/agenda" component={Agenda} />
-          <Route path="/super-admin" component={SuperAdminAgenda} />
+          <Route path="/super-admin" component={() => <SuperAdminAgenda />} />
           <Route path="/admin" component={AdminEmpresa} />
-          <Route path="/configuracoes" component={Configuracoes} />
+          <Route path="/configuracoes" component={() => <Configuracoes />} />
           <Route path="/profissionais" component={ProfessionalConfig} />
-          <Route path="/config-profissionais" component={ConfigProfissionais} />
+          <Route path="/config-profissionais" component={() => <ConfigProfissionais />} />
           <Route path="/dashboard" component={Home} />
           <Route component={NotFound} />
         </>
