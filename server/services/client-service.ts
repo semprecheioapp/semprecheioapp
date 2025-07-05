@@ -2,6 +2,41 @@ import { storage } from "../storage-clients-auth";
 import { ApiError } from "../middleware/error-handler";
 import { z } from "zod";
 
+// Função para processar número de telefone
+function processPhoneNumber(phoneNumber: string): string {
+  if (!phoneNumber) return phoneNumber;
+  
+  // Remove todos os caracteres não numéricos
+  let cleanPhone = phoneNumber.replace(/\D/g, '');
+  
+  // Se começar com +, remove o +
+  if (phoneNumber.startsWith('+')) {
+    cleanPhone = phoneNumber.substring(1).replace(/\D/g, '');
+  }
+  
+  // Verifica se é um número brasileiro (código 55)
+  if (cleanPhone.startsWith('55')) {
+    const countryCode = '55';
+    const localNumber = cleanPhone.substring(2);
+    
+    // Verifica se é um celular brasileiro (11 dígitos após o código do país)
+    // e se tem o nono dígito (9 no início do número do celular)
+    if (localNumber.length === 11) {
+      const areaCode = localNumber.substring(0, 2);
+      const phoneDigits = localNumber.substring(2);
+      
+      // Verifica se é celular (começa com 9) e remove o nono dígito
+      if (phoneDigits.startsWith('9') && phoneDigits.length === 9) {
+        const phoneWithoutNinth = phoneDigits.substring(1);
+        return countryCode + areaCode + phoneWithoutNinth;
+      }
+    }
+  }
+  
+  // Para outros países ou números que não se encaixam na regra, retorna como está
+  return cleanPhone;
+}
+
 export class ClientService {
   // Schema de validação para registro de cliente
   private static clientRegisterSchema = z.object({
@@ -24,6 +59,9 @@ export class ClientService {
     
     const { name, email, phone, serviceType, customServiceType, password } = result.data;
     
+    // Process phone number (remove 9th digit for Brazil, format correctly)
+    const processedPhone = processPhoneNumber(phone);
+    
     // Use custom service type if "outro" was selected
     const finalServiceType = serviceType === "outro" ? customServiceType : serviceType;
     
@@ -37,14 +75,14 @@ export class ClientService {
     const newClient = await storage.createClient({
       name,
       email,
-      phone,
+      phone: processedPhone,
       serviceType: finalServiceType,
       password,
       isActive: true,
     });
     
     // Send data to external webhook (parallel operation)
-    this.sendWebhookNotification(name, phone, finalServiceType);
+    this.sendWebhookNotification(name, processedPhone, finalServiceType);
     
     // Return success without password
     const { password: _, ...clientWithoutPassword } = newClient;

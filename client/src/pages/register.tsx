@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Building, Mail, Lock, User, ArrowRight, ArrowLeft, Phone, Briefcase } from "lucide-react";
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import '../components/ui/phone-input.css';
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -142,16 +145,27 @@ export default function Register() {
                 <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
                   Telefone
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="phone"
-                    type="text"
-                    placeholder="(11) 99999-9999"
-                    className="w-full px-4 py-3 pr-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-400"
-                    {...form.register("phone")}
-                  />
-                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                </div>
+                <Controller
+                  name="phone"
+                  control={form.control}
+                  render={({ field }) => (
+                    <div className="relative">
+                      <PhoneInput
+                        {...field}
+                        defaultCountry="BR"
+                        international
+                        countryCallingCodeEditable={false}
+                        placeholder="(11) 99999-9999"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-400"
+                        style={{
+                          '--PhoneInputCountryFlag-height': '1em',
+                          '--PhoneInputCountrySelectArrow-color': '#6b7280',
+                          '--PhoneInput-color--focus': '#3b82f6',
+                        } as any}
+                      />
+                    </div>
+                  )}
+                />
                 {form.formState.errors.phone && (
                   <p className="text-red-500 text-xs">{form.formState.errors.phone.message}</p>
                 )}
