@@ -1,61 +1,13 @@
 {
   "version": 2,
-  "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
   "rewrites": [
-    {
-      "source": "/api/auth/login",
-      "destination": "/api/auth/login"
-    },
-    {
-      "source": "/api/auth/user",
-      "destination": "/api/auth/user"
-    },
-    {
-      "source": "/api/dashboard",
-      "destination": "/api/dashboard"
-    },
-    {
-      "source": "/api/professionals",
-      "destination": "/api/professionals"
-    },
-    {
-      "source": "/api/appointments",
-      "destination": "/api/appointments"
-    },
-    {
-      "source": "/api/clients",
-      "destination": "/api/clients"
-    },
-    {
-      "source": "/api/specialties",
-      "destination": "/api/specialties"
-    },
-    {
-      "source": "/api/services",
-      "destination": "/api/services"
-    },
-    {
-      "source": "/api/customers",
-      "destination": "/api/customers"
-    },
-    {
-      "source": "/api/connections",
-      "destination": "/api/connections"
-    },
-    {
-      "source": "/api/professional-availability",
-      "destination": "/api/professional-availability"
-    },
-    {
-      "source": "/api/companies/metrics",
-      "destination": "/api/companies/metrics"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
