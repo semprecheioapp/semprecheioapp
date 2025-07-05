@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/lib/auth";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import RedirectHandler from "@/components/RedirectHandler";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Home from "@/pages/home";
@@ -48,7 +49,7 @@ function Router() {
       <ProtectedRoute path="/config-profissionais" component={ConfigProfissionais} allowedRoles={['admin', 'super_admin']} />
       <ProtectedRoute path="/whatsapp" component={WhatsAppChannels} allowedRoles={['admin', 'super_admin']} />
       <ProtectedRoute path="/dashboard" component={Home} allowedRoles={['admin', 'super_admin']} />
-      <ProtectedRoute path="/" component={SuperAdminAgenda} allowedRoles={['super_admin']} />
+      <ProtectedRoute path="/" component={RedirectHandler} allowedRoles={['admin', 'super_admin']} />
       
       <Route component={NotFound} />
     </Switch>
