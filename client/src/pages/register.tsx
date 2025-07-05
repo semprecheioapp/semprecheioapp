@@ -293,8 +293,20 @@ export default function Register() {
           </CardContent>
         </Card>
 
+        {/* Biblical Verse */}
+        <div className="text-center mt-4 xs:mt-6 px-4">
+          <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 mb-3">
+            <span className="text-red-500 text-lg">❤️</span>
+            <p className="italic">
+              "Honra ao Senhor com os teus bens e com as primícias de toda a tua renda;
+              e se encherão os teus celeiros, e transbordarão de vinho os teus lagares."
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 font-medium">Provérbios 3:9-10</p>
+        </div>
+
         {/* Footer */}
-        <div className="text-center mt-6 text-xs text-gray-400">
+        <div className="text-center mt-4 text-xs text-gray-400">
           <p>© 2025 - Todos os direitos reservados</p>
         </div>
       </div>
