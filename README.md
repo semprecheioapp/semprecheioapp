@@ -2,7 +2,7 @@
 
 > Deploy Ready - Vercel Compatible - TypeScript Fixed
 
-## 📊 Versão Atual: 0.1.0 (Estável)
+## 📊 Versão Atual: 0.1.1 (APIs Simplificadas)
 
 ### 🎯 **SISTEMA COMPLETO E FUNCIONAL**
 Sistema de gestão para salões, clínicas, barbearias e empresas de serviços com agendamento online, WhatsApp e IA.
