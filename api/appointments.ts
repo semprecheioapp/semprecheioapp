@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             phone
           )
         `)
-        .order('appointment_date', { ascending: true });
+        .order('scheduled_at', { ascending: true });
       
       if (error) {
         console.error('Error fetching appointments:', error);
@@ -47,23 +47,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     
     if (req.method === 'POST') {
-      const { 
-        customer_id, 
-        professional_id, 
-        service_id, 
-        appointment_date, 
-        appointment_time,
-        notes 
+      const {
+        professional_id,
+        service_id,
+        scheduled_at,
+        start_time,
+        end_time,
+        duration,
+        notes
       } = req.body;
-      
+
       const { data: appointment, error } = await supabase
         .from('appointments')
         .insert([{
-          customer_id,
           professional_id,
           service_id,
-          appointment_date,
-          appointment_time,
+          scheduled_at,
+          start_time,
+          end_time,
+          duration: duration || 60,
           notes,
           status: 'scheduled'
         }])
