@@ -178,7 +178,7 @@ export class ClientsAuthStorage implements IStorage {
         .single();
 
       if (!existingSuperAdmin) {
-        const hashedPassword = await bcrypt.hash('123456', 10);
+        const hashedPassword = await bcrypt.hash('99240601Ma@n', 10);
         await supabase.from('clients').insert({
           name: 'Super Admin - SempreCheioApp',
           email: 'semprecheioapp@gmail.com',
@@ -190,7 +190,7 @@ export class ClientsAuthStorage implements IStorage {
         console.log('Super admin created successfully');
       } else {
         // Atualizar senha do super admin existente
-        const hashedPassword = await bcrypt.hash('123456', 10);
+        const hashedPassword = await bcrypt.hash('99240601Ma@n', 10);
         await supabase
           .from('clients')
           .update({
@@ -300,7 +300,7 @@ export class ClientsAuthStorage implements IStorage {
   async updateSuperAdminPassword() {
     try {
       console.log('Forcing super admin password update...');
-      const hashedPassword = await bcrypt.hash('123456', 10);
+      const hashedPassword = await bcrypt.hash('99240601Ma@n', 10);
       const { data, error } = await supabase
         .from('clients')
         .update({
