@@ -22,7 +22,7 @@ const requireAuth = async (req: AuthRequest, res: Response, next: Function) => {
   
   // Direct authentication for super admin to bypass session storage issues
   if (sessionId === "super-admin-session-permanent") {
-    const superAdminClient = await storage.getClientByEmail("agenciambkautomacoes@gmail.com");
+    const superAdminClient = await storage.getClientByEmail("semprecheioapp@gmail.com");
     if (superAdminClient) {
       req.user = {
         id: 165,

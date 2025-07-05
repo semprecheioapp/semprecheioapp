@@ -151,7 +151,7 @@ export class ClientsAuthStorage implements IStorage {
       userId: superAdminUserId,
       expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
       createdAt: new Date(),
-      email: "agenciambkautomacoes@gmail.com"
+      email: "semprecheioapp@gmail.com"
     });
 
     console.log('Permanent session initialized for super admin');
@@ -174,14 +174,14 @@ export class ClientsAuthStorage implements IStorage {
       const { data: existingSuperAdmin } = await supabase
         .from('clients')
         .select('*')
-        .eq('email', 'agenciambkautomacoes@gmail.com')
+        .eq('email', 'semprecheioapp@gmail.com')
         .single();
 
       if (!existingSuperAdmin) {
-        const hashedPassword = await bcrypt.hash('99240601$$##$', 10);
+        const hashedPassword = await bcrypt.hash('123456', 10);
         await supabase.from('clients').insert({
-          name: 'Super Admin - Agência MBK Automações',
-          email: 'agenciambkautomacoes@gmail.com',
+          name: 'Super Admin - SempreCheioApp',
+          email: 'semprecheioapp@gmail.com',
           phone: '556699618890',
           service_type: 'super_admin',
           is_active: true,
@@ -190,15 +190,15 @@ export class ClientsAuthStorage implements IStorage {
         console.log('Super admin created successfully');
       } else {
         // Atualizar senha do super admin existente
-        const hashedPassword = await bcrypt.hash('99240601$$##$', 10);
+        const hashedPassword = await bcrypt.hash('123456', 10);
         await supabase
           .from('clients')
           .update({
             password: hashedPassword,
-            name: 'Super Admin - Agência MBK Automações',
+            name: 'Super Admin - SempreCheioApp',
             service_type: 'super_admin'
           })
-          .eq('email', 'agenciambkautomacoes@gmail.com');
+          .eq('email', 'semprecheioapp@gmail.com');
         console.log('Super admin password updated successfully');
       }
 
@@ -300,15 +300,15 @@ export class ClientsAuthStorage implements IStorage {
   async updateSuperAdminPassword() {
     try {
       console.log('Forcing super admin password update...');
-      const hashedPassword = await bcrypt.hash('99240601$$##$', 10);
+      const hashedPassword = await bcrypt.hash('123456', 10);
       const { data, error } = await supabase
         .from('clients')
         .update({
           password: hashedPassword,
-          name: 'Super Admin - Agência MBK Automações',
+          name: 'Super Admin - SempreCheioApp',
           service_type: 'super_admin'
         })
-        .eq('email', 'agenciambkautomacoes@gmail.com')
+        .eq('email', 'semprecheioapp@gmail.com')
         .select();
 
       if (error) {
@@ -536,7 +536,7 @@ export class ClientsAuthStorage implements IStorage {
     // Check for permanent super admin session first
     if (sessionId === "super-admin-session-permanent") {
       console.log('Using permanent super admin session');
-      const superAdminClient = await this.getClientByEmail("agenciambkautomacoes@gmail.com");
+      const superAdminClient = await this.getClientByEmail("semprecheioapp@gmail.com");
       if (superAdminClient) {
         return {
           id: 165,
