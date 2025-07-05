@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Building, Mail, Lock, ArrowRight, Users, Info } from "lucide-react";
+import { Eye, EyeOff, Building, Mail, Lock, ArrowRight } from "lucide-react";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -54,14 +54,7 @@ export default function Login() {
     }
   };
 
-  const fillTestUser = (email: string) => {
-    form.setValue("email", email);
-    form.setValue("password", "123456");
-    toast({
-      title: "Credenciais preenchidas",
-      description: "E-mail e senha foram preenchidos automaticamente.",
-    });
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 xs:p-6 sm:p-8 safe-area-inset">
@@ -187,51 +180,7 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Test Users Section */}
-            <div className="mt-6 xs:mt-8 pt-4 xs:pt-6 border-t border-gray-100">
-              <div className="bg-gray-50 rounded-lg p-3 xs:p-4 space-y-3">
-                <h3 className="text-xs xs:text-sm font-semibold text-gray-700 flex items-center space-x-2">
-                  <Users className="text-gray-500 w-3 h-3 xs:w-4 xs:h-4" />
-                  <span>Usuários de teste:</span>
-                </h3>
 
-                <div className="space-y-2 text-xs xs:text-sm">
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between space-y-1 xs:space-y-0">
-                      <span className="font-medium text-gray-600">Super Admin:</span>
-                      <button
-                        type="button"
-                        onClick={() => fillTestUser("super@admin.com")}
-                        className="text-gray-800 font-mono text-xs bg-white px-2 py-1 rounded border hover:bg-gray-50 transition-colors cursor-pointer text-left xs:text-center"
-                      >
-                        super@admin.com
-                      </button>
-                    </div>
-                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between space-y-1 xs:space-y-0">
-                      <span className="font-medium text-gray-600">Admin:</span>
-                      <button
-                        type="button"
-                        onClick={() => fillTestUser("admin@salon.com")}
-                        className="text-gray-800 font-mono text-xs bg-white px-2 py-1 rounded border hover:bg-gray-50 transition-colors cursor-pointer text-left xs:text-center"
-                      >
-                        admin@salon.com
-                      </button>
-                    </div>
-                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between pt-2 border-t border-gray-200 space-y-1 xs:space-y-0">
-                      <span className="font-medium text-gray-600">Senha:</span>
-                      <span className="text-gray-800 font-mono text-xs bg-white px-2 py-1 rounded border text-left xs:text-center">
-                        123456
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-xs text-gray-500 italic mt-2 flex items-start xs:items-center">
-                  <Info className="w-3 h-3 mr-1 mt-0.5 xs:mt-0 flex-shrink-0" />
-                  <span>Use as credenciais acima para testar o sistema</span>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
