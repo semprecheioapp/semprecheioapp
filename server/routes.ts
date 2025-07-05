@@ -1716,10 +1716,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Aplicar middleware de tratamento de erros (deve ser o último)
-  app.use(notFoundHandler);
-  app.use(errorHandler);
-
   const httpServer = createServer(app);
   return httpServer;
 }
