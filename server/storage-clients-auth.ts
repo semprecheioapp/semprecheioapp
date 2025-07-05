@@ -2122,7 +2122,7 @@ export class ClientsAuthStorage implements IStorage {
       .from('subscriptions')
       .insert({
         client_id: subscription.clientId,
-        plan_id: subscription.planId,
+        plan_id: Number(subscription.planId), // Explicitly cast to number
         status: subscription.status,
         current_period_start: subscription.currentPeriodStart.toISOString(),
         current_period_end: subscription.currentPeriodEnd.toISOString(),

@@ -29,23 +29,27 @@ export default function Login() {
 
   const onSubmit = async (data: LoginRequest) => {
     try {
+      console.log("Login - Iniciando processo de login");
       const result = await loginMutation.mutateAsync(data);
+      console.log("Login - Resultado do login:", result);
       toast({
         title: "Sucesso!",
         description: result.message,
       });
 
-      // Redirect based on user type
+      // Redirect based on user role
+      let redirectPath = '/dashboard';
       if (result.user?.redirectPath) {
-        setLocation(result.user.redirectPath);
-      } else if (result.user?.userType === 'Super Admin') {
-        setLocation('/super-admin');
-      } else if (result.user?.userType === 'Admin da Empresa') {
-        setLocation('/admin');
-      } else {
-        setLocation('/dashboard');
+        redirectPath = result.user.redirectPath;
+      } else if (result.user?.role === 'super_admin') {
+        redirectPath = '/super-admin';
+      } else if (result.user?.role === 'admin') {
+        redirectPath = '/admin';
       }
+      console.log("Login - Redirecionando para:", redirectPath);
+      setLocation(redirectPath);
     } catch (error: any) {
+      console.error("Login - Erro no processo de login:", error);
       toast({
         title: "Erro no login",
         description: error.message || "Credenciais inválidas. Verifique seu e-mail e senha.",

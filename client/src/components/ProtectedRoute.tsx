@@ -16,16 +16,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ component: Component, p
     <Route
       path={path}
       component={() => {
+        console.log('ProtectedRoute - Path:', path);
+        console.log('ProtectedRoute - IsAuthenticated:', isAuthenticated);
+        console.log('ProtectedRoute - Role:', role);
+        console.log('ProtectedRoute - AllowedRoles:', allowedRoles);
+
         if (isLoading) {
           return <div>Carregando...</div>;
         }
 
         if (!isAuthenticated) {
+          console.log('ProtectedRoute - Not authenticated, redirecting to /login');
           setLocation('/login');
           return null;
         }
 
-        if (!allowedRoles.includes(role)) {
+        // Ensure role is not null before checking includes
+        if (role === null || !allowedRoles.includes(role)) {
+          console.log('ProtectedRoute - Role not allowed, redirecting to /acesso-negado');
           setLocation('/acesso-negado');
           return null;
         }

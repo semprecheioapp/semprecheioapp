@@ -117,8 +117,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours
         }
         
-        // Convert ID to number for session creation
-        const userId = typeof user.id === 'string' ? parseInt(user.id) : user.id;
+        // Ensure userId is a valid number
+        let userId: number;
+        if (typeof user.id === 'string') {
+          userId = parseInt(user.id);
+          if (isNaN(userId)) {
+            throw new Error("Invalid user ID");
+          }
+        } else if (typeof user.id === 'number') {
+          userId = user.id;
+        } else {
+          throw new Error("Invalid user ID type");
+        }
         const session = await storage.createSession(userId, expiresAt, user.email);
         sessionId = session.id;
       }
@@ -1556,6 +1566,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { planId: planIdStr, billingType, customerData } = req.body;
       const planId = parseInt(planIdStr, 10);
+      console.log('DEBUG - planId after parseInt:', planId, 'Type:', typeof planId);
+
+      if (isNaN(planId)) {
+        return res.status(400).json({ message: "ID do plano inválido" });
+      }
 
       let clientId: string;
       if (req.user.role === 'company_admin') {
@@ -1593,7 +1608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Criar assinatura local
       const subscription = await storage.createSubscription({
         clientId,
-        planId: planId,
+        planId: Number(planId), // Ensure planId is a number
         status: 'ACTIVE',
         currentPeriodStart: new Date(),
         currentPeriodEnd: nextDueDate,
