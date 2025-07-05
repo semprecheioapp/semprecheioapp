@@ -1,0 +1,14 @@
+server/
+scripts/
+*.js
+*.cjs
+*.sql
+test-*.js
+populate-*.js
+check-*.js
+security-*.js
+cookies*.txt
+BACKUP_INFO.txt
+*.md
+node_modules/
+.git/
