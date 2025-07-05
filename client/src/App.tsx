@@ -41,7 +41,6 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={() => <SuperAdminAgenda />} />
           <Route path="/agenda" component={Agenda} />
           <Route path="/super-admin" component={() => <SuperAdminAgenda />} />
           <Route path="/admin" component={AdminEmpresa} />
@@ -50,7 +49,7 @@ function Router() {
           <Route path="/config-profissionais" component={() => <ConfigProfissionais />} />
           <Route path="/whatsapp" component={() => <WhatsAppChannels />} />
           <Route path="/dashboard" component={Home} />
-          <Route component={NotFound} />
+          <Route path="/" component={() => <SuperAdminAgenda />} />
         </>
       )}
     </Switch>
