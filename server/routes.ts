@@ -107,6 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const webhookData = {
           empresa_nome: name,
+          email: email,
           telefone: phone,
           tipo_servico: finalServiceType,
           timestamp: new Date().toISOString(),
@@ -324,8 +325,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
         const monthlyAppointments = clientAppointments.filter(a => {
-          // Usar scheduledAt se disponível, senão usar appointment_time do banco
-          const appointmentDate = new Date(a.scheduledAt || a.appointment_time);
+          // Usar scheduledAt se disponível
+          const appointmentDate = new Date(a.scheduledAt);
           return appointmentDate.getMonth() === currentMonth && appointmentDate.getFullYear() === currentYear;
         }).length;
         const monthlyRevenue = monthlyAppointments * averageServicePrice;
@@ -354,7 +355,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           appointmentDates: clientAppointments.map(a => ({
             id: a.id,
             scheduledAt: a.scheduledAt,
-            appointment_time: a.appointment_time,
             status: a.status
           }))
         });
@@ -455,11 +455,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Receita mensal estimada (considerando agendamentos do mês atual)
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
-      const monthlyAppointments = appointments.filter(a => {
+      const monthlyAppointmentsCount = appointments.filter(a => {
         const appointmentDate = new Date(a.scheduledAt);
         return appointmentDate.getMonth() === currentMonth && appointmentDate.getFullYear() === currentYear;
       }).length;
-      const monthlyRevenue = monthlyAppointments * averageServicePrice;
+      const monthlyRevenue = monthlyAppointmentsCount * averageServicePrice;
 
       // Atividades recentes - últimos agendamentos e empresas
       const recentAppointments = appointments
@@ -637,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Filtrar agendamentos por período
       appointments = appointments.filter(apt => {
-        const appointmentDate = new Date(apt.scheduledAt || apt.appointment_time || apt.createdAt);
+        const appointmentDate = new Date(apt.scheduledAt || apt.createdAt);
         return appointmentDate >= periodStartDate && appointmentDate <= periodEndDate;
       });
 
@@ -762,7 +762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })),
 
         // Estatísticas de uso (limites)
-        usage: basicStats?.usage || { currentUsers: totalProfessionals, currentAppointments: monthlyAppointments, currentStorage: 0 },
+        usage: basicStats?.usage || { currentUsers: totalProfessionals, currentAppointments: periodAppointments, currentStorage: 0 },
         limits: basicStats?.limits || { maxUsers: 5, maxAppointments: 100, maxStorage: 1, plan: 'basic' },
         percentages: basicStats?.percentages || { users: 0, appointments: 0, storage: 0 }
       };
@@ -832,7 +832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Filtrar por período
       appointments = appointments.filter(apt => {
-        const appointmentDate = new Date(apt.scheduledAt || apt.appointment_time || apt.createdAt);
+        const appointmentDate = new Date(apt.scheduledAt || apt.createdAt);
         return appointmentDate >= periodStartDate && appointmentDate <= periodEndDate;
       });
 
@@ -847,7 +847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       let totalRevenue = 0;
-      const appointmentDetails = appointments.map(appointment => {
+      const appointmentDetails = appointments.map((appointment: any) => {
         const service = services.find(s => s.id === appointment.serviceId);
         const professional = professionals.find(p => p.id === appointment.professionalId);
         const customer = customers.find(c => c.id === appointment.customerId);
@@ -860,8 +860,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         return {
-          data: new Date(appointment.scheduledAt || appointment.appointment_time || appointment.createdAt).toLocaleDateString('pt-BR'),
-          hora: new Date(appointment.scheduledAt || appointment.appointment_time || appointment.createdAt).toLocaleTimeString('pt-BR'),
+          data: new Date(appointment.scheduledAt || appointment.createdAt).toLocaleDateString('pt-BR'),
+          hora: new Date(appointment.scheduledAt || appointment.createdAt).toLocaleTimeString('pt-BR'),
           profissional: professional?.name || 'N/A',
           cliente: customer?.name || 'N/A',
           servico: service?.name || 'N/A',
@@ -1402,7 +1402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar agendamento pelo ID e validar telefone
       const appointments = await storage.listAppointments();
-      const appointment = appointments.find(apt => 
+      const appointment = (appointments as any[]).find(apt => 
         apt.id === agendamento_id && 
         apt.customerPhone === sessionid
       );
@@ -1424,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Agendamento cancelado com sucesso via webhook",
         agendamento_id,
         sessionid,
-        customerName: appointment.customerName
+        customerName: (appointment as any).customerName
       });
     } catch (error) {
       console.error("Error in webhook cancellation:", error);
@@ -1837,7 +1837,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create subscription with Asaas integration
   app.post("/api/subscriptions", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const { planId, billingType, customerData } = req.body;
+      const { planId: planIdStr, billingType, customerData } = req.body;
+      const planId = parseInt(planIdStr, 10);
 
       let clientId: string;
       if (req.user.role === 'company_admin') {
@@ -1875,13 +1876,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Criar assinatura local
       const subscription = await storage.createSubscription({
         clientId,
-        planId,
+        planId: planId,
         status: 'ACTIVE',
         currentPeriodStart: new Date(),
         currentPeriodEnd: nextDueDate,
         asaasSubscriptionId: asaasSubscription.id,
         asaasCustomerId: asaasCustomer.id!,
-        cancelAtPeriodEnd: false
+        cancelAtPeriodEnd: false,
+        trialStart: undefined,
+        trialEnd: undefined,
+        canceledAt: undefined
       });
 
       res.status(201).json(subscription);
@@ -1967,7 +1971,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: 'RECEIVED',
               paymentMethod: payment.billingType,
               asaasPaymentId: payment.id,
-              processedAt: new Date(payment.dateCreated)
+              processedAt: new Date(payment.dateCreated),
+              asaasTransactionReceiptUrl: '',
+              failureReason: ''
             });
           }
           break;
