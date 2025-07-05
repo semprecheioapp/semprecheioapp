@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/lib/auth";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Home from "@/pages/home";
@@ -17,6 +18,7 @@ import Configuracoes from "@/pages/configuracoes";
 import ProfessionalConfig from "@/pages/professional-config";
 import ConfigProfissionais from "@/pages/config-profissionais";
 import AdminEmpresa from "@/pages/admin";
+import AcessoNegado from "@/pages/acesso-negado";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -34,24 +36,21 @@ function Router() {
 
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/cadastro" component={Register} />
-          <Route path="/" component={Login} />
-        </>
-      ) : (
-        <>
-          <Route path="/agenda" component={Agenda} />
-          <Route path="/super-admin" component={() => <SuperAdminAgenda />} />
-          <Route path="/admin" component={AdminEmpresa} />
-          <Route path="/configuracoes" component={() => <Configuracoes />} />
-          <Route path="/profissionais" component={ProfessionalConfig} />
-          <Route path="/config-profissionais" component={() => <ConfigProfissionais />} />
-          <Route path="/whatsapp" component={() => <WhatsAppChannels />} />
-          <Route path="/dashboard" component={Home} />
-          <Route path="/" component={() => <SuperAdminAgenda />} />
-        </>
-      )}
+      <Route path="/login" component={Login} />
+      <Route path="/cadastro" component={Register} />
+      <Route path="/acesso-negado" component={AcessoNegado} />
+      
+      <ProtectedRoute path="/agenda" component={Agenda} allowedRoles={['admin', 'super_admin']} />
+      <ProtectedRoute path="/super-admin" component={SuperAdminAgenda} allowedRoles={['super_admin']} />
+      <ProtectedRoute path="/admin" component={AdminEmpresa} allowedRoles={['admin', 'super_admin']} />
+      <ProtectedRoute path="/configuracoes" component={Configuracoes} allowedRoles={['admin', 'super_admin']} />
+      <ProtectedRoute path="/profissionais" component={ProfessionalConfig} allowedRoles={['admin', 'super_admin']} />
+      <ProtectedRoute path="/config-profissionais" component={ConfigProfissionais} allowedRoles={['admin', 'super_admin']} />
+      <ProtectedRoute path="/whatsapp" component={WhatsAppChannels} allowedRoles={['admin', 'super_admin']} />
+      <ProtectedRoute path="/dashboard" component={Home} allowedRoles={['admin', 'super_admin']} />
+      <ProtectedRoute path="/" component={SuperAdminAgenda} allowedRoles={['super_admin']} />
+      
+      <Route component={NotFound} />
     </Switch>
   );
 }

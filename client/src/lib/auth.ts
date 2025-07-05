@@ -28,6 +28,7 @@ export function useAuth() {
     user,
     isLoading,
     isAuthenticated: !!user,
+    role: user?.role || null,
   };
 }
 
