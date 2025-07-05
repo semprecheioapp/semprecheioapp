@@ -16,11 +16,14 @@ module.exports = async function handler(req, res) {
   
   try {
     if (req.method === 'GET') {
-      const { data: services, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('is_active', true)
-        .order('name', { ascending: true });
+      const { clientId } = req.query;
+      let query = supabase.from('services').select('*').eq('is_active', true);
+
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      }
+
+      const { data: services, error } = await query.order('name', { ascending: true });
       
       if (error) {
         console.error('Error fetching services:', error);

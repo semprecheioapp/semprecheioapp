@@ -4,13 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users, Settings, UserCheck, Briefcase, Menu, X, LogOut, User, Key, Shield, Clock, Tag, BarChart3, CreditCard, TrendingUp, Building2, Download } from 'lucide-react';
+import { Calendar, Users, Settings, UserCheck, Briefcase, Menu, X, LogOut, User, Key, Shield, Clock, Tag, BarChart3, CreditCard, TrendingUp, Building2, Download, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CalendarView from '@/components/CalendarView';
 import ProfessionalScheduleConfig from '@/components/ProfessionalScheduleConfig';
 import ProfessionalsManagement from '@/components/ProfessionalsManagement';
@@ -44,6 +47,54 @@ const AdminEmpresa: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('month');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
+  const [showNewServiceModal, setShowNewServiceModal] = useState(false);
+  const [newService, setNewService] = useState({
+    name: '',
+    description: '',
+    duration: 0,
+    price: 0
+  });
+
+  const handleNewServiceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentClient?.id) return;
+
+    try {
+      const response = await fetch('/api/services', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...newService,
+          client_id: currentClient.id
+        }),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao adicionar serviço');
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Serviço adicionado com sucesso!",
+      });
+
+      setShowNewServiceModal(false);
+      setNewService({ name: '', description: '', duration: 0, price: 0 });
+      
+      // Recarregar a lista de serviços
+      refetchServices();
+    } catch (error) {
+      console.error('Erro ao adicionar serviço:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o serviço. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Função para download do relatório
   const handleDownloadReport = async () => {
@@ -117,20 +168,21 @@ const AdminEmpresa: React.FC = () => {
     enabled: !!userData?.email
   });
 
-  // Get services for the company
-  const { data: servicesData, isLoading: servicesLoading } = useQuery({
-    queryKey: ['company-services'],
-    queryFn: async () => {
-      const response = await fetch('/api/services', {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Erro ao buscar serviços');
-      }
-      return response.json();
-    },
-    enabled: !!userData?.email
-  });
+// Get services for the company
+const { data: servicesData, isLoading: servicesLoading, refetch: refetchServices } = useQuery({
+  queryKey: ['company-services', clientData?.id],
+  queryFn: async () => {
+    if (!clientData?.id) return [];
+    const response = await fetch(`/api/services?clientId=${clientData.id}`, {
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      throw new Error('Erro ao buscar serviços');
+    }
+    return response.json();
+  },
+  enabled: !!clientData?.id
+});
 
   // Get professionals for the company
   const { data: professionalsData, isLoading: professionalsLoading } = useQuery({
@@ -901,6 +953,12 @@ const AdminEmpresa: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-4">
+                    <Button onClick={() => setShowNewServiceModal(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Novo Serviço
+                    </Button>
+                  </div>
                   {servicesLoading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
@@ -945,7 +1003,7 @@ const AdminEmpresa: React.FC = () => {
                         Ainda não há serviços cadastrados para {currentClient?.name}
                       </p>
                       <p className="text-sm text-gray-400">
-                        Entre em contato com o administrador para cadastrar serviços.
+                        Clique no botão "Adicionar Novo Serviço" para começar.
                       </p>
                     </div>
                   )}
@@ -953,6 +1011,44 @@ const AdminEmpresa: React.FC = () => {
               </Card>
             </div>
           )}
+
+          {/* Modal para adicionar novo serviço */}
+          <Dialog open={showNewServiceModal} onOpenChange={setShowNewServiceModal}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Adicionar Novo Serviço</DialogTitle>
+                <DialogDescription>
+                  Preencha os detalhes do novo serviço abaixo.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleNewServiceSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Nome do Serviço</Label>
+                    <Input id="name" value={newService.name} onChange={(e) => setNewService({...newService, name: e.target.value})} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea id="description" value={newService.description} onChange={(e) => setNewService({...newService, description: e.target.value})} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="duration">Duração (minutos)</Label>
+                    <Input id="duration" type="number" value={newService.duration} onChange={(e) => setNewService({...newService, duration: parseInt(e.target.value)})} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="price">Preço (R$)</Label>
+                    <Input id="price" type="number" step="0.01" value={newService.price} onChange={(e) => setNewService({...newService, price: parseFloat(e.target.value)})} required />
+                  </div>
+                </div>
+                <DialogFooter className="mt-6">
+                  <Button type="button" variant="outline" onClick={() => setShowNewServiceModal(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit">Adicionar Serviço</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {activeSection === 'Clientes' && (
             <div className="space-y-6">
