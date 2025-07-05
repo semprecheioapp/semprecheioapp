@@ -356,6 +356,66 @@
     min-height: 48px !important;
   }
 
+  /* Mobile table improvements */
+  table {
+    font-size: 0.875rem;
+  }
+
+  th, td {
+    padding: 0.5rem !important;
+    white-space: nowrap;
+  }
+
+  /* Mobile card improvements */
+  .card {
+    margin: 0.5rem !important;
+    border-radius: 0.75rem !important;
+  }
+
+  /* Mobile grid improvements */
+  .grid {
+    gap: 0.75rem !important;
+  }
+
+  /* Mobile spacing improvements */
+  .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  .space-y-4 > * + * {
+    margin-top: 0.75rem !important;
+  }
+
+  /* Mobile padding improvements */
+  .p-6 {
+    padding: 1rem !important;
+  }
+
+  .p-8 {
+    padding: 1.5rem !important;
+  }
+
+  /* Mobile text size improvements */
+  .text-3xl {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+
+  .text-2xl {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  /* Mobile sidebar improvements */
+  .sidebar-mobile {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+
   /* Better spacing for mobile */
   .space-y-4 > * + * {
     margin-top: 1rem !important;

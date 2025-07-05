@@ -64,10 +64,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 xs:p-6 sm:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 xs:p-6 sm:p-8 safe-area-inset">
       <div className="w-full max-w-sm xs:max-w-md sm:max-w-lg md:max-w-xl lg:max-w-md">
         <Card className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
-          <CardContent className="p-6 xs:p-8 sm:p-10 space-y-6">
+          <CardContent className="p-4 xs:p-6 sm:p-8 md:p-10 space-y-4 xs:space-y-6">
             {/* Logo Section */}
             <div className="text-center mb-6 xs:mb-8">
               <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">

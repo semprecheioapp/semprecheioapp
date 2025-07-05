@@ -92,13 +92,13 @@ export function ResponsiveLayout({ children, title = "SempreCheioApp", currentPa
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center space-x-3">
+      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 safe-area-inset">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
           <Button
             variant="ghost"
             size="sm"
             onClick={toggleMobileMenu}
-            className="p-2"
+            className="p-2 touch-target"
           >
             {isMobileMenuOpen ? (
               <X className="w-5 h-5" />
@@ -106,18 +106,18 @@ export function ResponsiveLayout({ children, title = "SempreCheioApp", currentPa
               <Menu className="w-5 h-5" />
             )}
           </Button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+          <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
             {title}
           </h1>
         </div>
-        
-        <div className="flex items-center space-x-2">
+
+        <div className="flex items-center space-x-1">
           <ThemeToggle />
           <Button
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="p-2"
+            className="p-2 touch-target"
           >
             <LogOut className="w-4 h-4" />
           </Button>
@@ -182,7 +182,7 @@ export function ResponsiveLayout({ children, title = "SempreCheioApp", currentPa
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={toggleMobileMenu}>
-            <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-y-0 left-0 w-72 sm:w-80 bg-white dark:bg-gray-800 shadow-xl sidebar-mobile open safe-area-inset" onClick={(e) => e.stopPropagation()}>
               {/* Mobile Logo */}
               <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-3">
@@ -236,8 +236,10 @@ export function ResponsiveLayout({ children, title = "SempreCheioApp", currentPa
 
         {/* Main Content */}
         <div className="flex-1 lg:ml-64">
-          <main className="min-h-screen">
-            {children}
+          <main className="min-h-screen safe-area-inset">
+            <div className="container-responsive">
+              {children}
+            </div>
           </main>
         </div>
       </div>
