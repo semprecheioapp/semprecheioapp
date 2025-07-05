@@ -1129,7 +1129,7 @@ export class ClientsAuthStorage implements IStorage {
           specialty_id: appointmentData.specialty_id || null,
           customer_id: appointmentData.customer_id || null, // Agora opcional
           availability_id: appointmentData.availability_id,
-          appointment_time: appointmentData.appointment_time || new Date().toISOString(),
+          scheduled_at: appointmentData.scheduled_at || new Date().toISOString(),
           status: appointmentData.status || 'pendente',
           customer_name: appointmentData.customer_name || null,
           customer_phone: appointmentData.customer_phone || null

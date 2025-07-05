@@ -101,7 +101,7 @@ const SQL_COMMANDS = [
     service_id UUID REFERENCES services(id),
     customer_id UUID REFERENCES customers(id),
     availability_id UUID REFERENCES professional_availability(id),
-    appointment_time TIMESTAMPTZ,
+    scheduled_at TIMESTAMPTZ,
     status TEXT DEFAULT 'pendente',
     created_at TIMESTAMPTZ DEFAULT NOW()
   );`,
