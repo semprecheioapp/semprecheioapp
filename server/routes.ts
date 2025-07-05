@@ -6,6 +6,8 @@ import { loginSchema, registerSchema } from "@shared/schema";
 import { z } from "zod";
 import { auditMiddleware, logAudit } from "./middleware/audit";
 import { checkUserLimits, checkAppointmentLimits, getClientUsageStats } from "./middleware/limits";
+import { errorHandler, notFoundHandler, asyncHandler, ApiError } from "./middleware/error-handler";
+import { ClientService } from "./services/client-service";
 import { asaasService } from "./asaas-service";
 
 interface AuthRequest extends Request {
@@ -56,93 +58,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(auditMiddleware);
   
   // Register endpoint - Creates new client companies
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
-    try {
-      // Create schema for client registration
-      const clientRegisterSchema = z.object({
-        name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-        email: z.string().email("E-mail inválido"),
-        phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
-        serviceType: z.string().min(1, "Selecione o tipo de serviço"),
-        customServiceType: z.string().optional(),
-        password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-        confirmPassword: z.string().min(6, "Confirmação de senha é obrigatória"),
-      });
-      
-      const result = clientRegisterSchema.safeParse(req.body);
-      
-      if (!result.success) {
-        return res.status(400).json({ 
-          message: "Dados inválidos",
-          errors: result.error.flatten().fieldErrors 
-        });
-      }
-      
-      const { name, email, phone, serviceType, customServiceType, password } = result.data;
-      
-      // Use custom service type if "outro" was selected
-      const finalServiceType = serviceType === "outro" ? customServiceType : serviceType;
-      
-      // Check if client already exists
-      const existingClient = await storage.getClientByEmail(email);
-      if (existingClient) {
-        return res.status(409).json({ 
-          message: "Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail." 
-        });
-      }
-      
-      // Create new client company
-      const newClient = await storage.createClient({
-        name,
-        email,
-        phone,
-        serviceType: finalServiceType,
-        password,
-        isActive: true,
-      });
-      
-      // Send data to external webhook (parallel operation)
-      try {
-        const webhookUrl = "https://wb.semprecheioapp.com.br/webhook/super_admin_creat_clients";
-        
-        const webhookData = {
-          empresa_nome: name,
-          email: email,
-          telefone: phone,
-          tipo_servico: finalServiceType,
-          timestamp: new Date().toISOString(),
-          source: "semprecheioapp_cadastro"
-        };
-        
-        // Send to webhook asynchronously (don't wait for response)
-        fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookData)
-        }).catch(error => {
-          console.log("Webhook notification failed (non-critical):", error.message);
-        });
-        
-      } catch (webhookError) {
-        // Webhook failure should not affect user registration
-        console.log("Webhook error (non-critical):", webhookError);
-      }
-      
-      // Return success without password
-      const { password: _, ...clientWithoutPassword } = newClient;
-      
-      res.status(201).json({ 
-        message: "Empresa cadastrada com sucesso! Você pode fazer login agora.",
-        client: clientWithoutPassword 
-      });
-      
-    } catch (error) {
-      console.error("Client register error:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
+  app.post("/api/auth/register", asyncHandler(async (req: Request, res: Response) => {
+    const client = await ClientService.registerClient(req.body);
+    
+    res.status(201).json({ 
+      message: "Empresa cadastrada com sucesso! Você pode fazer login agora.",
+      client 
+    });
+  }));
   
   // Login endpoint - Now supports both users and clients
   app.post("/api/auth/login", async (req: Request, res: Response) => {
@@ -525,255 +448,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Clients routes
-  app.get("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
-    try {
-      const clients = await storage.listClients();
-      res.json(clients);
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-      res.status(500).json({ message: "Erro ao buscar clientes" });
-    }
-  });
+  app.get("/api/clients", requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+    const clients = await ClientService.listClients();
+    res.json(clients);
+  }));
 
-  app.post("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
-    try {
-      const client = await storage.createClient(req.body);
-      res.status(201).json(client);
-    } catch (error) {
-      console.error("Error creating client:", error);
-      res.status(500).json({ message: "Erro ao criar cliente" });
-    }
-  });
+  app.post("/api/clients", requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+    const client = await ClientService.createClient(req.body);
+    res.status(201).json(client);
+  }));
 
-  app.patch("/api/clients/:id", requireAuth, async (req: AuthRequest, res: Response) => {
-    try {
-      const client = await storage.updateClient(req.params.id, req.body);
-      if (!client) {
-        return res.status(404).json({ message: "Cliente não encontrado" });
-      }
-      res.json(client);
-    } catch (error) {
-      console.error("Error updating client:", error);
-      res.status(500).json({ message: "Erro ao atualizar cliente" });
-    }
-  });
+  app.patch("/api/clients/:id", requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+    const client = await ClientService.updateClient(req.params.id, req.body);
+    res.json(client);
+  }));
 
-  app.delete("/api/clients/:id", requireAuth, async (req: AuthRequest, res: Response) => {
-    try {
-      await storage.deleteClient(req.params.id);
-      res.json({ message: "Cliente excluído com sucesso" });
-    } catch (error) {
-      console.error("Error deleting client:", error);
-      res.status(500).json({ message: "Erro ao excluir cliente" });
-    }
-  });
+  app.delete("/api/clients/:id", requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ClientService.deleteClient(req.params.id);
+    res.json({ message: "Cliente excluído com sucesso" });
+  }));
 
   // Client usage statistics with real financial data
-  app.get("/api/clients/:id/usage", requireAuth, async (req: AuthRequest, res: Response) => {
-    try {
-      const clientId = req.params.id;
-      const professionalId = req.query.professional_id as string; // Novo parâmetro para filtrar por profissional
-      const startDate = req.query.start_date as string; // Data de início do período
-      const endDate = req.query.end_date as string; // Data de fim do período
-      const period = req.query.period as string; // Período pré-definido: 'week', 'month', 'custom'
+  app.get("/api/clients/:id/usage", requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+    const clientId = req.params.id;
+    const filters = {
+      professionalId: req.query.professional_id as string,
+      startDate: req.query.start_date as string,
+      endDate: req.query.end_date as string,
+      period: req.query.period as string
+    };
 
-      console.log(`🔍 DEBUG - Usage API called with params:`, {
-        clientId,
-        professionalId,
-        startDate,
-        endDate,
-        period,
-        queryParams: req.query
-      });
-
-      // Verificar se o usuário tem permissão para ver as estatísticas
-      if (req.user.role === 'company_admin') {
-        const client = await storage.getClientByEmail(req.user.email);
-        if (!client || client.id !== clientId) {
-          return res.status(403).json({ message: "Acesso negado" });
-        }
-      } else if (req.user.role !== 'super_admin') {
-        return res.status(403).json({ message: "Acesso negado" });
+    // Verificar permissões
+    if (req.user.role === 'company_admin') {
+      const client = await storage.getClientByEmail(req.user.email);
+      if (!client || client.id !== clientId) {
+        throw new ApiError("Acesso negado", 403);
       }
-
-      // Buscar dados reais da empresa
-      const professionals = await storage.listProfessionalsByClient(clientId);
-      const customers = await storage.listCustomers(clientId);
-      const services = await storage.listServicesByClient(clientId);
-      let appointments = await storage.listAppointments({ clientId });
-
-      // Calcular período de análise
-      let periodStartDate: Date;
-      let periodEndDate: Date;
-
-      if (period === 'week') {
-        // Semana atual
-        const now = new Date();
-        const dayOfWeek = now.getDay();
-        periodStartDate = new Date(now);
-        periodStartDate.setDate(now.getDate() - dayOfWeek);
-        periodStartDate.setHours(0, 0, 0, 0);
-
-        periodEndDate = new Date(periodStartDate);
-        periodEndDate.setDate(periodStartDate.getDate() + 6);
-        periodEndDate.setHours(23, 59, 59, 999);
-      } else if (period === 'month') {
-        // Mês atual
-        const now = new Date();
-        periodStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        periodEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-      } else if (startDate && endDate) {
-        // Período customizado
-        periodStartDate = new Date(startDate);
-        periodStartDate.setHours(0, 0, 0, 0);
-        periodEndDate = new Date(endDate);
-        periodEndDate.setHours(23, 59, 59, 999);
-      } else {
-        // Padrão: mês atual
-        const now = new Date();
-        periodStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        periodEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-      }
-
-      // Filtrar agendamentos por período
-      appointments = appointments.filter(apt => {
-        const appointmentDate = new Date(apt.scheduledAt || apt.createdAt);
-        return appointmentDate >= periodStartDate && appointmentDate <= periodEndDate;
-      });
-
-      // Filtrar agendamentos por profissional se especificado
-      if (professionalId && professionalId !== 'all') {
-        console.log(`DEBUG - Filtering appointments for professional: ${professionalId}`);
-        console.log(`DEBUG - Total appointments before filter: ${appointments.length}`);
-        appointments = appointments.filter(apt => apt.professionalId === professionalId);
-        console.log(`DEBUG - Total appointments after filter: ${appointments.length}`);
-        console.log(`DEBUG - Filtered appointments:`, appointments.map(apt => ({
-          id: apt.id,
-          professionalId: apt.professionalId,
-          serviceId: apt.serviceId,
-          status: apt.status
-        })));
-      }
-
-      // Calcular métricas reais baseadas nos agendamentos filtrados
-      const totalProfessionals = professionalId && professionalId !== 'all' ? 1 : professionals.length;
-      const totalCustomers = customers.length;
-      const totalServices = services.length;
-      const totalAppointments = appointments.length;
-
-      // Calcular agendamentos concluídos
-      const completedAppointments = appointments.filter(a =>
-        a.status === 'completed' || a.status === 'confirmed' || a.status === 'confirmado'
-      ).length;
-
-      // Calcular receita baseada nos preços reais dos serviços (já filtrados por período)
-      let grossRevenue = 0;
-      let periodRevenue = 0; // Receita do período selecionado
-
-      console.log(`DEBUG - Calculating revenue for ${appointments.length} appointments`);
-      for (const appointment of appointments) {
-        if (appointment.status === 'completed' || appointment.status === 'confirmed' || appointment.status === 'confirmado') {
-          // Buscar o serviço para obter o preço real
-          const service = services.find(s => s.id === appointment.serviceId);
-          // Preços estão em centavos no banco, converter para reais
-          const servicePriceInCents = service?.price || 15000; // Fallback para R$ 150,00
-          const servicePrice = servicePriceInCents / 100; // Converter centavos para reais
-
-          console.log(`DEBUG - Appointment ${appointment.id}: service=${service?.name}, price=${servicePrice}, professional=${appointment.professionalId}`);
-
-          grossRevenue += servicePrice;
-          periodRevenue += servicePrice; // Como já filtramos por período, toda receita é do período
-        }
-      }
-
-      console.log(`DEBUG - Final calculation: grossRevenue=${grossRevenue}, periodRevenue=${periodRevenue}, completedAppointments=${completedAppointments}`);
-      console.log(`DEBUG - Professional filter: ${professionalId}, isFiltered: ${!!professionalId && professionalId !== 'all'}`);
-
-
-      // Agendamentos do período (já filtrados)
-      const periodAppointments = appointments.length;
-
-      // Calcular métricas derivadas
-      const platformCommission = grossRevenue * 0.1; // 10% de comissão
-      const netRevenue = grossRevenue - platformCommission;
-      const averageTicket = completedAppointments > 0 ? grossRevenue / completedAppointments : 0;
-      const conversionRate = totalAppointments > 0 ? (completedAppointments / totalAppointments) * 100 : 0;
-
-      // Obter estatísticas de uso básicas
-      const basicStats = await getClientUsageStats(clientId);
-
-      // Buscar informações do profissional selecionado se especificado
-      let selectedProfessional = null;
-      if (professionalId && professionalId !== 'all') {
-        selectedProfessional = professionals.find(p => p.id === professionalId);
-      }
-
-      const response = {
-        // Métricas financeiras reais
-        grossRevenue,
-        netRevenue,
-        monthlyRevenue: periodRevenue, // Receita do período selecionado
-        platformCommission,
-        averageTicket,
-        conversionRate,
-
-        // Métricas de quantidade
-        totalProfessionals,
-        totalCustomers,
-        totalServices,
-        totalAppointments,
-        completedAppointments,
-        monthlyAppointments: periodAppointments, // Agendamentos do período
-
-        // Informações do período
-        period: {
-          type: period || 'month',
-          startDate: periodStartDate.toISOString(),
-          endDate: periodEndDate.toISOString(),
-          label: period === 'week' ? 'Semana Atual' :
-                 period === 'month' ? 'Mês Atual' :
-                 startDate && endDate ? `${new Date(startDate).toLocaleDateString('pt-BR')} - ${new Date(endDate).toLocaleDateString('pt-BR')}` :
-                 'Mês Atual'
-        },
-
-        // Informações do filtro aplicado
-        filter: {
-          professionalId: professionalId || 'all',
-          professionalName: selectedProfessional?.name || 'Todos os Profissionais',
-          isFiltered: !!professionalId && professionalId !== 'all',
-          professionalDetails: selectedProfessional ? {
-            id: selectedProfessional.id,
-            name: selectedProfessional.name,
-            email: selectedProfessional.email,
-            specialtyName: (selectedProfessional as any).specialtyName || 'Sem especialidade',
-            totalAppointments: appointments.length,
-            completedAppointments: completedAppointments,
-            grossRevenue: grossRevenue,
-            periodRevenue: periodRevenue,
-            averageTicket: completedAppointments > 0 ? grossRevenue / completedAppointments : 0
-          } : null
-        },
-
-        // Lista de profissionais disponíveis para filtro
-        availableProfessionals: professionals.map(p => ({
-          id: p.id,
-          name: p.name,
-          specialtyName: (p as any).specialtyName || 'Sem especialidade'
-        })),
-
-        // Estatísticas de uso (limites)
-        usage: basicStats?.usage || { currentUsers: totalProfessionals, currentAppointments: periodAppointments, currentStorage: 0 },
-        limits: basicStats?.limits || { maxUsers: 5, maxAppointments: 100, maxStorage: 1, plan: 'basic' },
-        percentages: basicStats?.percentages || { users: 0, appointments: 0, storage: 0 }
-      };
-
-      console.log('DEBUG - Dashboard response:', JSON.stringify(response, null, 2));
-      res.json(response);
-    } catch (error) {
-      console.error("Error fetching client usage stats:", error);
-      res.status(500).json({ message: "Erro ao buscar estatísticas de uso" });
+    } else if (req.user.role !== 'super_admin') {
+      throw new ApiError("Acesso negado", 403);
     }
-  });
+
+    const stats = await ClientService.getClientUsageStats(clientId, filters);
+    res.json(stats);
+  }));
 
   // Download relatório de profissional
   app.get("/api/clients/:id/report", requireAuth, async (req: AuthRequest, res: Response) => {
@@ -1998,6 +1715,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao processar webhook" });
     }
   });
+
+  // Aplicar middleware de tratamento de erros (deve ser o último)
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   const httpServer = createServer(app);
   return httpServer;
