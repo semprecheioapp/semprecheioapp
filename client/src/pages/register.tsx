@@ -13,6 +13,7 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import '../components/ui/phone-input.css';
 import { z } from "zod";
+import { createErrorToast } from "@/lib/error-utils";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -59,11 +60,8 @@ export default function Register() {
       }, 1500);
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro no cadastro",
-        description: error.message || "Erro ao criar conta. Tente novamente.",
-        variant: "destructive",
-      });
+      const errorToast = createErrorToast(error, "Erro no cadastro");
+      toast(errorToast);
     },
   });
 

@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Building, Mail, Lock, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Building, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
+import { createErrorToast } from "@/lib/error-utils";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -46,11 +47,8 @@ export default function Login() {
         setLocation('/dashboard');
       }
     } catch (error: any) {
-      toast({
-        title: "Erro no login",
-        description: error.message || "Credenciais inválidas. Verifique seu e-mail e senha.",
-        variant: "destructive",
-      });
+      const errorToast = createErrorToast(error, "Erro no login");
+      toast(errorToast);
     }
   };
 
