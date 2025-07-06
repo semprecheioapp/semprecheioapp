@@ -14,6 +14,7 @@ import 'react-phone-number-input/style.css';
 import '../components/ui/phone-input.css';
 import { z } from "zod";
 import { createErrorToast } from "@/lib/error-utils";
+import { useLocation } from "wouter";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -38,11 +39,17 @@ const registerSchema = z.object({
 
 type RegisterRequest = z.infer<typeof registerSchema>;
 
+/**
+ * PÁGINA DE CADASTRO - APENAS FORMULÁRIO DE REGISTRO
+ * Esta página deve exibir SOMENTE o formulário de cadastro de empresas
+ * NÃO deve conter formulário de login
+ */
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const registerMutation = useMutation({
     mutationFn: async (registerData: RegisterRequest) => {
@@ -56,7 +63,7 @@ export default function Register() {
       });
       // Redirect to login after successful registration
       setTimeout(() => {
-        window.location.href = "/";
+        setLocation("/login");
       }, 1500);
     },
     onError: (error: any) => {
@@ -87,13 +94,13 @@ export default function Register() {
       <div className="w-full max-w-lg">
         <Card className="bg-white rounded-2xl shadow-xl border-0">
           <CardContent className="p-8 space-y-6">
-            {/* Header */}
+            {/* Header - APENAS CADASTRO */}
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
                 <Building className="text-white w-8 h-8" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Cadastrar Empresa</h1>
-              <p className="text-gray-500 text-sm">Preencha os dados para criar sua conta</p>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">📝 Cadastrar Nova Empresa</h1>
+              <p className="text-gray-500 text-sm">Preencha os dados para criar sua conta empresarial</p>
             </div>
 
             {/* Formulário de Cadastro */}
@@ -295,8 +302,8 @@ export default function Register() {
                 Já tem uma conta?{" "}
                 <button
                   type="button"
-                  onClick={() => window.location.href = "/"}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  onClick={() => setLocation("/login")}
+                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
                 >
                   Fazer login
                 </button>

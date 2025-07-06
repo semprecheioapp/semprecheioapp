@@ -77,6 +77,7 @@ function Router() {
       {!isAuthenticated ? (
         <>
           <Route path="/cadastro" component={Register} />
+          <Route path="/sign-up" component={Register} />
           <Route path="/login" component={Login} />
           <Route path="/" component={Login} />
           <Route path="*" component={Login} />
