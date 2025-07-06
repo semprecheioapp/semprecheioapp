@@ -882,6 +882,7 @@ export class ClientsAuthStorage implements IStorage {
         description: specialty.description,
         color: specialty.color || '#3B82F6',
         service_id: specialty.serviceId,
+        client_id: specialty.clientId,
         is_active: specialty.isActive ?? true
       })
       .select()
@@ -905,6 +906,7 @@ export class ClientsAuthStorage implements IStorage {
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.color) updateData.color = updates.color;
     if (updates.serviceId !== undefined) updateData.service_id = updates.serviceId;
+    if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
     if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
 
     const { data, error } = await supabase
@@ -1491,6 +1493,7 @@ export class ClientsAuthStorage implements IStorage {
       description: data.description,
       color: data.color || '#3B82F6',
       serviceId: data.service_id,
+      clientId: data.client_id,
       isActive: data.is_active,
       createdAt: new Date(data.created_at)
     };

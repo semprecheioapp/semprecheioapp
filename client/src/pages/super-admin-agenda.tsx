@@ -165,7 +165,8 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
     name: "",
     description: "",
     color: "#3B82F6",
-    serviceId: ""
+    serviceId: "",
+    clientId: ""
   });
   const [showDeleteSpecialtyConfirm, setShowDeleteSpecialtyConfirm] = useState(false);
   const [specialtyToDelete, setSpecialtyToDelete] = useState<any>(null);
@@ -660,7 +661,8 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
       name: "",
       description: "",
       color: "#3B82F6",
-      serviceId: ""
+      serviceId: "",
+      clientId: ""
     });
   };
 
@@ -1100,26 +1102,28 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
       name: specialty.name,
       description: specialty.description || "",
       color: specialty.color || "#3B82F6",
-      serviceId: specialty.serviceId || ""
+      serviceId: specialty.serviceId || "",
+      clientId: specialty.clientId || ""
     });
     setShowSpecialtyModal(true);
   };
 
   const handleSubmitSpecialty = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const specialtyData = {
       name: specialtyForm.name,
       description: specialtyForm.description,
       color: specialtyForm.color,
       serviceId: specialtyForm.serviceId || null,
+      clientId: specialtyForm.clientId || null,
       isActive: true
     };
 
     if (editingSpecialty) {
-      updateSpecialtyMutation.mutate({ 
-        id: editingSpecialty.id, 
-        data: specialtyData 
+      updateSpecialtyMutation.mutate({
+        id: editingSpecialty.id,
+        data: specialtyData
       });
     } else {
       createSpecialtyMutation.mutate(specialtyData);
@@ -4640,6 +4644,27 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
                 onChange={(e) => setSpecialtyForm(prev => ({ ...prev, description: e.target.value }))}
                 className="mt-1"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="specialty-clientId" className="text-sm font-medium">
+                Empresa
+              </Label>
+              <Select
+                value={specialtyForm.clientId}
+                onValueChange={(value) => setSpecialtyForm(prev => ({ ...prev, clientId: value }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecione uma empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(clientsData as any[])?.map((client: any) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>

@@ -335,6 +335,7 @@ export const insertSpecialtySchema = createInsertSchema(specialties).pick({
   description: true,
   color: true,
   serviceId: true,
+  clientId: true,
   isActive: true,
 });
 
