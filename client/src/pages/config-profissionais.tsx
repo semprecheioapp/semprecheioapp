@@ -30,7 +30,6 @@ interface ProfessionalAvailability {
   endTime: string;
   isActive: boolean;
   serviceId?: string;
-  specialtyId?: string;
   customPrice?: number;
   customDuration?: number;
 }
@@ -43,7 +42,6 @@ interface AvailabilityForm {
   endTime: string;
   isActive: boolean;
   serviceId?: string;
-  specialtyId?: string;
   customPrice?: number;
   customDuration?: number;
   slotDuration: number; // Duração do slot em minutos (30 ou 60)
@@ -103,24 +101,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     },
   });
 
-  // Buscar especialidades (com fallback para não quebrar o formulário)
-  const { data: specialtiesData = [], isError: specialtiesError } = useQuery({
-    queryKey: ["/api/specialties"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/specialties");
-        if (!response.ok) return []; // Fallback silencioso
-        const data = await response.json();
-        return Array.isArray(data) ? data : []; // Garantir que é array
-      } catch (error) {
-        console.warn("Erro ao carregar especialidades:", error);
-        return []; // Fallback silencioso
-      }
-    },
-    retry: false, // Não tentar novamente se falhar
-    refetchOnWindowFocus: false, // Não refazer query ao focar janela
-    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
-  });
+
 
   // Filtrar profissionais por empresa
   const filteredProfessionals = professionals.filter((prof: Professional) => {
@@ -285,7 +266,6 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       isActive: true,
       date: undefined,
       dayOfWeek: undefined,
-      specialtyId: undefined,
       slotDuration: 60,
     });
   };
@@ -345,7 +325,6 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       dayOfWeek: formData.dayOfWeek !== undefined ? formData.dayOfWeek : undefined,
       isActive: formData.isActive,
       serviceId: formData.serviceId,
-      specialtyId: formData.specialtyId || undefined, // Campo opcional e seguro
       customPrice: formData.customPrice,
       customDuration: formData.slotDuration,
     };
@@ -412,7 +391,6 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       endTime: availability.endTime,
       isActive: availability.isActive,
       serviceId: availability.serviceId,
-      specialtyId: availability.specialtyId,
       customPrice: availability.customPrice,
       customDuration: availability.customDuration || 60,
       slotDuration: availability.customDuration || 60,
@@ -826,37 +804,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
               </Select>
             </div>
 
-            {/* Especialidade - Campo opcional e seguro (só renderiza se não houver erro) */}
-            {!specialtiesError && (
-              <div className="space-y-2">
-                <Label>Especialidade (Opcional)</Label>
-                <Select
-                  value={formData.specialtyId || ""}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, specialtyId: value || undefined }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma especialidade (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Nenhuma especialidade específica</SelectItem>
-                    {Array.isArray(specialtiesData) && specialtiesData.length > 0 ? (
-                      specialtiesData.map((specialty: any) => (
-                        <SelectItem key={specialty.id} value={specialty.id}>
-                          {specialty.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="" disabled>
-                        Nenhuma especialidade disponível
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">
-                  Vincule este horário a uma especialidade específica. Útil para profissionais multifuncionais.
-                </p>
-              </div>
-            )}
+
 
             {/* Horários */}
             <div className="grid grid-cols-2 gap-4">
