@@ -30,6 +30,7 @@ interface ProfessionalAvailability {
   endTime: string;
   isActive: boolean;
   serviceId?: string;
+  specialtyId?: string;
   customPrice?: number;
   customDuration?: number;
 }
@@ -42,6 +43,7 @@ interface AvailabilityForm {
   endTime: string;
   isActive: boolean;
   serviceId?: string;
+  specialtyId?: string;
   customPrice?: number;
   customDuration?: number;
   slotDuration: number; // Duração do slot em minutos (30 ou 60)
@@ -97,6 +99,16 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
         : "/api/professionals";
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) throw new Error("Erro ao carregar profissionais");
+      return response.json();
+    },
+  });
+
+  // Buscar especialidades
+  const { data: specialtiesData = [] } = useQuery({
+    queryKey: ["/api/specialties"],
+    queryFn: async () => {
+      const response = await fetch("/api/specialties");
+      if (!response.ok) throw new Error("Erro ao carregar especialidades");
       return response.json();
     },
   });
@@ -264,6 +276,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       isActive: true,
       date: undefined,
       dayOfWeek: undefined,
+      specialtyId: undefined,
       slotDuration: 60,
     });
   };
@@ -389,6 +402,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       endTime: availability.endTime,
       isActive: availability.isActive,
       serviceId: availability.serviceId,
+      specialtyId: availability.specialtyId,
       customPrice: availability.customPrice,
       customDuration: availability.customDuration || 60,
       slotDuration: availability.customDuration || 60,
@@ -800,6 +814,30 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                   <SelectItem value="120">2 horas</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Especialidade */}
+            <div className="space-y-2">
+              <Label>Especialidade</Label>
+              <Select
+                value={formData.specialtyId || ""}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, specialtyId: value || undefined }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma especialidade (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhuma especialidade específica</SelectItem>
+                  {specialtiesData?.map((specialty: any) => (
+                    <SelectItem key={specialty.id} value={specialty.id}>
+                      {specialty.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Vincule este horário a uma especialidade específica. Útil para profissionais multifuncionais.
+              </p>
             </div>
 
             {/* Horários */}

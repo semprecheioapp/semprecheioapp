@@ -245,6 +245,7 @@ export const professionalAvailability = pgTable("professional_availability", {
   endTime: time("end_time").notNull(), // HH:mm:ss format
   isActive: boolean("is_active").default(true),
   serviceId: uuid("service_id").references(() => services.id), // opcional: horário específico para um serviço
+  specialtyId: uuid("specialty_id").references(() => specialties.id), // opcional: horário específico para uma especialidade
   customPrice: integer("custom_price"), // preço personalizado em centavos
   customDuration: integer("custom_duration"), // duração personalizada em minutos
   dayOfWeek: integer("day_of_week"), // 0-6 (0=domingo, 1=segunda, etc.)
@@ -387,6 +388,7 @@ export const insertProfessionalAvailabilitySchema = createInsertSchema(professio
   endTime: true,
   isActive: true,
   serviceId: true,
+  specialtyId: true,
   customPrice: true,
   customDuration: true,
   dayOfWeek: true,

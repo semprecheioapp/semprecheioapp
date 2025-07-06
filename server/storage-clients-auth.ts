@@ -1765,6 +1765,7 @@ export class ClientsAuthStorage implements IStorage {
         end_time: availability.endTime,
         is_active: availability.isActive !== undefined ? availability.isActive : true,
         day_of_week: availability.dayOfWeek !== undefined ? availability.dayOfWeek : null,
+        specialty_id: availability.specialtyId || null,
       };
 
       console.log("🔍 DEBUG - Dados que serão inseridos no banco:", insertData);
@@ -1797,6 +1798,7 @@ export class ClientsAuthStorage implements IStorage {
       if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
       if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
       if (updates.dayOfWeek !== undefined) updateData.day_of_week = updates.dayOfWeek;
+      if (updates.specialtyId !== undefined) updateData.specialty_id = updates.specialtyId;
       
       const { data, error } = await supabase
         .from('professional_availability')
@@ -1956,6 +1958,7 @@ export class ClientsAuthStorage implements IStorage {
       endTime: data.end_time,
       isActive: data.is_active,
       serviceId: data.service_id || null,
+      specialtyId: data.specialty_id || null,
       customPrice: data.custom_price || null,
       customDuration: data.custom_duration || null,
       dayOfWeek: data.day_of_week,
