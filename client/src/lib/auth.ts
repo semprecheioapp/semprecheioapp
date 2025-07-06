@@ -54,8 +54,16 @@ export function useLogout() {
       await apiRequest("/api/auth/logout", "POST");
     },
     onSuccess: () => {
+      // Limpar dados do usuário
       queryClient.setQueryData(["/api/auth/user"], null);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+      // Limpar localStorage/sessionStorage se houver
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Redirecionar para login
+      window.location.href = '/login';
     },
   });
 }

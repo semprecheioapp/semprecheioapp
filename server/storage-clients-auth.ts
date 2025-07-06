@@ -572,12 +572,19 @@ export class ClientsAuthStorage implements IStorage {
       const client = await this.getClientByEmail(sessionData.email);
       if (client) {
         console.log('Found client by email');
+
+        // Determinar role baseado no email
+        let role = 'company_admin';
+        if (sessionData.email === 'semprecheioapp@gmail.com') {
+          role = 'super_admin';
+        }
+
         return {
           id: sessionData.userId,
           name: client.name,
           email: client.email,
           password: client.password || '',
-          role: 'company_admin',
+          role: role,
           createdAt: client.createdAt || new Date()
         } as User;
       }

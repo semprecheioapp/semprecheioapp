@@ -16,11 +16,18 @@ module.exports = async function handler(req, res) {
   
   try {
     if (req.method === 'GET') {
-      const { data: services, error } = await supabase
+      const { client_id } = req.query;
+      let query = supabase
         .from('services')
         .select('*')
         .eq('is_active', true)
         .order('name', { ascending: true });
+
+      if (client_id) {
+        query = query.eq('client_id', client_id);
+      }
+      
+      const { data: services, error } = await query;
       
       if (error) {
         console.error('Error fetching services:', error);

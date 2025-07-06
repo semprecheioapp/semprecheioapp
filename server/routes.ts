@@ -45,8 +45,18 @@ const requireAuth = async (req: AuthRequest, res: Response, next: Function) => {
     console.log('Session validation failed, trying fallback lookup');
     return res.status(401).json({ message: "Sessão inválida" });
   }
-  
-  req.user = user;
+
+  // Garantir que o super admin tenha o role correto
+  let finalUser = user;
+  if (user.email === 'semprecheioapp@gmail.com') {
+    finalUser = {
+      ...user,
+      role: 'super_admin'
+    };
+    console.log('DEBUG - Super admin role corrected to: super_admin');
+  }
+
+  req.user = finalUser;
   next();
 };
 
@@ -104,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use permanent session for super admin to survive server restarts
       let sessionId;
       console.log('DEBUG - Checking email for permanent session:', email);
-      if (email === "agenciambkautomacoes@gmail.com") {
+      if (email === "semprecheioapp@gmail.com") {
         console.log('DEBUG - Using permanent session for super admin');
         sessionId = "super-admin-session-permanent";
       } else {
@@ -138,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let userType: string;
       let redirectPath: string;
 
-      if (email === "agenciambkautomacoes@gmail.com") {
+      if (email === "semprecheioapp@gmail.com") {
         // Super Admin
         userType = 'Super Admin';
         redirectPath = '/super-admin';
@@ -194,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let userType: string;
       let redirectPath: string;
 
-      if (req.user.email === "agenciambkautomacoes@gmail.com") {
+      if (req.user.email === "semprecheioapp@gmail.com") {
         // Super Admin
         userType = 'Super Admin';
         redirectPath = '/super-admin';
@@ -479,12 +489,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
 
     // Verificar permissões
-    if (req.user.role === 'company_admin') {
+    if (req.user.role === 'company_admin' && req.user.email !== 'semprecheioapp@gmail.com') {
       const client = await storage.getClientByEmail(req.user.email);
       if (!client || client.id !== clientId) {
         throw new ApiError("Acesso negado", 403);
       }
-    } else if (req.user.role !== 'super_admin') {
+    } else if (req.user.role !== 'super_admin' && req.user.email !== 'semprecheioapp@gmail.com') {
       throw new ApiError("Acesso negado", 403);
     }
 
@@ -856,7 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('DEBUG - Specialties API called by user:', req.user.email, 'role:', req.user.role);
 
       // Super admin especial - sempre vê todas as especialidades
-      if (req.user.email === "agenciambkautomacoes@gmail.com") {
+      if (req.user.email === "semprecheioapp@gmail.com") {
         console.log('DEBUG - Super admin accessing specialties, returning all');
         const specialties = await storage.listSpecialties();
         return res.json(specialties);
@@ -926,8 +936,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`DEBUG - Services API called by user: ${req.user.email}, role: ${req.user.role}`);
 
-      // Se for admin de empresa, filtrar pelos serviços da empresa
-      if (req.user.role === 'company_admin' && req.user.email) {
+      // Se for admin de empresa (não super admin), filtrar pelos serviços da empresa
+      if (req.user.role === 'company_admin' && req.user.email && req.user.email !== 'semprecheioapp@gmail.com') {
         console.log(`DEBUG - Company admin detected, filtering services`);
         const client = await storage.getClientByEmail(req.user.email);
         if (client) {
@@ -997,8 +1007,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { date, professionalId, clientId } = req.query;
       const filters: any = {};
 
-      // Se for admin de empresa, filtrar pelos agendamentos da empresa
-      if (req.user.role === 'company_admin' && req.user.email) {
+      // Se for admin de empresa (não super admin), filtrar pelos agendamentos da empresa
+      if (req.user.role === 'company_admin' && req.user.email && req.user.email !== 'semprecheioapp@gmail.com') {
         const client = await storage.getClientByEmail(req.user.email);
         if (client) {
           filters.clientId = client.id;
@@ -1158,8 +1168,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { clientId } = req.query;
       let targetClientId = clientId as string;
 
-      // Se for admin de empresa, filtrar pelos clientes da empresa
-      if (req.user.role === 'company_admin' && req.user.email) {
+      // Se for admin de empresa (não super admin), filtrar pelos clientes da empresa
+      if (req.user.role === 'company_admin' && req.user.email && req.user.email !== 'semprecheioapp@gmail.com') {
         const client = await storage.getClientByEmail(req.user.email);
         if (client) {
           targetClientId = client.id;
