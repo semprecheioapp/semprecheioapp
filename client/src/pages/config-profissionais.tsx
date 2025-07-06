@@ -103,14 +103,23 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     },
   });
 
-  // Buscar especialidades
-  const { data: specialtiesData = [] } = useQuery({
+  // Buscar especialidades (com fallback para não quebrar o formulário)
+  const { data: specialtiesData = [], isError: specialtiesError } = useQuery({
     queryKey: ["/api/specialties"],
     queryFn: async () => {
-      const response = await fetch("/api/specialties");
-      if (!response.ok) throw new Error("Erro ao carregar especialidades");
-      return response.json();
+      try {
+        const response = await fetch("/api/specialties");
+        if (!response.ok) return []; // Fallback silencioso
+        const data = await response.json();
+        return Array.isArray(data) ? data : []; // Garantir que é array
+      } catch (error) {
+        console.warn("Erro ao carregar especialidades:", error);
+        return []; // Fallback silencioso
+      }
     },
+    retry: false, // Não tentar novamente se falhar
+    refetchOnWindowFocus: false, // Não refazer query ao focar janela
+    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
   });
 
   // Filtrar profissionais por empresa
@@ -336,6 +345,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       dayOfWeek: formData.dayOfWeek !== undefined ? formData.dayOfWeek : undefined,
       isActive: formData.isActive,
       serviceId: formData.serviceId,
+      specialtyId: formData.specialtyId || undefined, // Campo opcional e seguro
       customPrice: formData.customPrice,
       customDuration: formData.slotDuration,
     };
@@ -816,29 +826,37 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
               </Select>
             </div>
 
-            {/* Especialidade */}
-            <div className="space-y-2">
-              <Label>Especialidade</Label>
-              <Select
-                value={formData.specialtyId || ""}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, specialtyId: value || undefined }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma especialidade (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Nenhuma especialidade específica</SelectItem>
-                  {specialtiesData?.map((specialty: any) => (
-                    <SelectItem key={specialty.id} value={specialty.id}>
-                      {specialty.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                Vincule este horário a uma especialidade específica. Útil para profissionais multifuncionais.
-              </p>
-            </div>
+            {/* Especialidade - Campo opcional e seguro (só renderiza se não houver erro) */}
+            {!specialtiesError && (
+              <div className="space-y-2">
+                <Label>Especialidade (Opcional)</Label>
+                <Select
+                  value={formData.specialtyId || ""}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, specialtyId: value || undefined }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma especialidade (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhuma especialidade específica</SelectItem>
+                    {Array.isArray(specialtiesData) && specialtiesData.length > 0 ? (
+                      specialtiesData.map((specialty: any) => (
+                        <SelectItem key={specialty.id} value={specialty.id}>
+                          {specialty.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="" disabled>
+                        Nenhuma especialidade disponível
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Vincule este horário a uma especialidade específica. Útil para profissionais multifuncionais.
+                </p>
+              </div>
+            )}
 
             {/* Horários */}
             <div className="grid grid-cols-2 gap-4">
