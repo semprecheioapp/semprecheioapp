@@ -101,6 +101,35 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     },
   });
 
+  // Buscar serviços filtrados por empresa (incremental - só query)
+  const { data: servicesData = [], isError: servicesError } = useQuery({
+    queryKey: ["/api/services", selectedClientId],
+    queryFn: async () => {
+      try {
+        let url = "/api/services";
+        if (selectedClientId && selectedClientId !== "all") {
+          url += `?client_id=${selectedClientId}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.warn("Serviços não disponíveis");
+          return [];
+        }
+
+        const data = await response.json();
+        console.log("✅ Serviços carregados:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.warn("Erro ao carregar serviços:", error);
+        return [];
+      }
+    },
+    enabled: !!selectedClientId && selectedClientId !== "all", // Só busca se tem empresa selecionada
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
 
 
 
