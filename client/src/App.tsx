@@ -23,18 +23,30 @@ import AdminEmpresa from "@/pages/admin";
 // Componente para redirecionamento automático baseado no perfil
 function AutoRedirect() {
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   React.useEffect(() => {
     if (user) {
-      // Determinar rota baseada no perfil do usuário
-      if (user.email === 'semprecheioapp@gmail.com' || user.userType === 'Super Admin' || user.role === 'super_admin') {
-        setLocation('/super-admin');
-      } else {
-        setLocation('/admin');
+      // Evitar redirecionamento se já estamos na rota correta
+      const targetPath = user.email === 'semprecheioapp@gmail.com' || user.userType === 'Super Admin' || user.role === 'super_admin'
+        ? '/super-admin'
+        : '/admin';
+
+      if (location !== targetPath) {
+        console.log('AutoRedirect: Redirecting to', targetPath, 'from', location);
+        setLocation(targetPath);
       }
     }
-  }, [user, setLocation]);
+  }, [user, location, setLocation]);
+
+  // Se já estamos na rota correta, não mostrar loading
+  if (user && ((user.email === 'semprecheioapp@gmail.com' || user.userType === 'Super Admin' || user.role === 'super_admin') && location === '/super-admin')) {
+    return null;
+  }
+
+  if (user && location === '/admin') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -65,6 +77,7 @@ function Router() {
       {!isAuthenticated ? (
         <>
           <Route path="/cadastro" component={Register} />
+          <Route path="/login" component={Login} />
           <Route path="/" component={Login} />
           <Route path="*" component={Login} />
         </>
@@ -128,8 +141,12 @@ function Router() {
             </ProtectedRoute>
           )} />
 
-          {/* Rota 404 */}
-          <Route path="*" component={NotFound} />
+          {/* Rota 404 - apenas para rotas realmente não encontradas */}
+          <Route path="*" component={() => (
+            <ProtectedRoute>
+              <AutoRedirect />
+            </ProtectedRoute>
+          )} />
         </>
       )}
     </Switch>

@@ -62,8 +62,8 @@ export function useLogout() {
       localStorage.clear();
       sessionStorage.clear();
 
-      // Redirecionar para login
-      window.location.href = '/login';
+      // Forçar reload da página para garantir limpeza completa
+      window.location.href = '/';
     },
   });
 }
