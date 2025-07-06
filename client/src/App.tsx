@@ -80,7 +80,6 @@ function Router() {
           <Route path="/sign-up" component={Register} />
           <Route path="/login" component={Login} />
           <Route path="/" component={Login} />
-          <Route path="*" component={Login} />
         </>
       ) : (
         <>

@@ -94,13 +94,13 @@ export default function Register() {
       <div className="w-full max-w-lg">
         <Card className="bg-white rounded-2xl shadow-xl border-0">
           <CardContent className="p-8 space-y-6">
-            {/* Header - APENAS CADASTRO */}
+            {/* Header */}
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
                 <Building className="text-white w-8 h-8" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">📝 Cadastrar Nova Empresa</h1>
-              <p className="text-gray-500 text-sm">Preencha os dados para criar sua conta empresarial</p>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">Cadastrar Empresa</h1>
+              <p className="text-gray-500 text-sm">Preencha os dados para criar sua conta</p>
             </div>
 
             {/* Formulário de Cadastro */}
