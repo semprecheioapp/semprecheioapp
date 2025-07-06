@@ -101,6 +101,24 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     },
   });
 
+  // Buscar serviços
+  const { data: servicesData = [] } = useQuery({
+    queryKey: ["/api/services"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/services");
+        if (!response.ok) return [];
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.warn("Erro ao carregar serviços:", error);
+        return [];
+      }
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
 
 
   // Filtrar profissionais por empresa
@@ -804,7 +822,35 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
               </Select>
             </div>
 
-
+            {/* Serviço Associado */}
+            <div className="space-y-2">
+              <Label>Serviço Associado (Opcional)</Label>
+              <Select
+                value={formData.serviceId || ""}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, serviceId: value || undefined }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um serviço (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhum serviço específico</SelectItem>
+                  {Array.isArray(servicesData) && servicesData.length > 0 ? (
+                    servicesData.map((service: any) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      Nenhum serviço disponível
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Vincule este horário a um serviço específico. Útil para horários dedicados.
+              </p>
+            </div>
 
             {/* Horários */}
             <div className="grid grid-cols-2 gap-4">
