@@ -337,6 +337,15 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       return;
     }
 
+    if (!formData.serviceId) {
+      toast({
+        title: "Erro",
+        description: "Selecione um serviço.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Gerar slots de tempo
     const timeSlots = generateTimeSlots(formData.startTime, formData.endTime, formData.slotDuration);
 
@@ -833,6 +842,36 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                   <SelectItem value="120">2 horas</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Serviço Associado - Campo obrigatório */}
+            <div className="space-y-2">
+              <Label>Serviço Associado *</Label>
+              <Select
+                value={formData.serviceId || ""}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, serviceId: value }))}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(servicesData) && servicesData.length > 0 ? (
+                    servicesData.map((service: any) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      {servicesError ? "Erro ao carregar serviços" : "Nenhum serviço disponível"}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Selecione o serviço que será oferecido neste horário.
+              </p>
             </div>
 
 
