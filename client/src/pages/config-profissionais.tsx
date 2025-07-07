@@ -825,29 +825,37 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                             ? 'bg-blue-50 border-blue-300'
                             : 'bg-white border-gray-200 hover:bg-gray-50'
                         }`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          e.nativeEvent.stopImmediatePropagation();
 
-                          if (isChecked) {
-                            // Remover dia da seleção
-                            const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
-                            const newDays = currentDays.filter(d => d !== day.value);
-                            setFormData(prev => ({
-                              ...prev,
-                              daysOfWeek: newDays.length > 0 ? newDays : undefined,
-                              dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
-                            }));
-                          } else {
-                            // Adicionar dia à seleção
-                            const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
-                            const newDays = [...currentDays, day.value].filter((v, i, a) => a.indexOf(v) === i).sort();
-                            setFormData(prev => ({
-                              ...prev,
-                              daysOfWeek: newDays,
-                              dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
-                            }));
-                          }
+                          // Usar setTimeout para garantir que o evento seja processado após o DOM
+                          setTimeout(() => {
+                            if (isChecked) {
+                              // Remover dia da seleção
+                              const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+                              const newDays = currentDays.filter(d => d !== day.value);
+                              setFormData(prev => ({
+                                ...prev,
+                                daysOfWeek: newDays.length > 0 ? newDays : undefined,
+                                dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
+                              }));
+                            } else {
+                              // Adicionar dia à seleção
+                              const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+                              const newDays = [...currentDays, day.value].filter((v, i, a) => a.indexOf(v) === i).sort();
+                              setFormData(prev => ({
+                                ...prev,
+                                daysOfWeek: newDays,
+                                dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
+                              }));
+                            }
+                          }, 0);
                         }}
                       >
                         <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
