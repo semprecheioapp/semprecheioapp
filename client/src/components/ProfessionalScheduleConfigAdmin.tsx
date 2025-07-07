@@ -104,6 +104,12 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Função para limpar campos que não devem ir para o backend
+  const cleanDataForBackend = (data: any) => {
+    const { breakStartTime, breakEndTime, daysOfWeek, ...cleanData } = data;
+    return cleanData;
+  };
+
   // Função para gerar slots de tempo (incluindo slots de intervalo com is_active: false)
   const generateTimeSlots = (startTime: string, endTime: string, slotDuration: number, breakStartTime?: string, breakEndTime?: string) => {
     const slots = [];
@@ -326,10 +332,8 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
       return;
     }
 
-    // Preparar dados (sem campos de intervalo - usamos apenas is_active)
-    const dataToSubmit = {
-      ...formData,
-    };
+    // Preparar dados (limpar campos que não devem ir para o backend)
+    const dataToSubmit = cleanDataForBackend(formData);
 
     if (editingAvailability) {
       updateAvailabilityMutation.mutate({

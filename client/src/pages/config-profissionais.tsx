@@ -48,8 +48,8 @@ interface AvailabilityForm {
   customPrice?: number;
   customDuration?: number;
   slotDuration: number; // Duração do slot em minutos (30 ou 60)
-  breakStartTime?: string; // Início do intervalo (almoço/pausa)
-  breakEndTime?: string; // Fim do intervalo (almoço/pausa)
+  breakStartTime?: string; // Início do intervalo (almoço/pausa) - APENAS FRONTEND
+  breakEndTime?: string; // Fim do intervalo (almoço/pausa) - APENAS FRONTEND
 }
 
 const DAYS_OF_WEEK = [
@@ -317,6 +317,12 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     });
   };
 
+  // Função para limpar campos que não devem ir para o backend
+  const cleanDataForBackend = (data: any) => {
+    const { breakStartTime, breakEndTime, daysOfWeek, ...cleanData } = data;
+    return cleanData;
+  };
+
   // Função para gerar slots de tempo (incluindo slots de intervalo com is_active: false)
   const generateTimeSlots = (startTime: string, endTime: string, slotDuration: number, breakStartTime?: string, breakEndTime?: string) => {
     const slots = [];
@@ -408,11 +414,12 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
 
     if (editingAvailability) {
       // Para edição, manter comportamento atual (um registro só)
-      const submitData = {
+      const submitData = cleanDataForBackend({
         ...baseData,
         startTime: formData.startTime,
         endTime: formData.endTime,
-      };
+        isActive: formData.isActive, // Usar o isActive do formulário para edição
+      });
 
       updateAvailabilityMutation.mutate({
         id: editingAvailability.id,
@@ -429,13 +436,14 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       // Para cada dia selecionado, criar todos os slots de tempo
       daysToCreate.forEach(dayOfWeek => {
         timeSlots.forEach(slot => {
-          slotsToCreate.push({
+          const slotData = cleanDataForBackend({
             ...baseData,
             dayOfWeek: dayOfWeek,
             startTime: slot.startTime,
             endTime: slot.endTime,
             isActive: slot.isActive, // Usar o isActive calculado do slot
           });
+          slotsToCreate.push(slotData);
         });
       });
 
