@@ -37,6 +37,8 @@ interface ProfessionalAvailability {
   endTime: string;
   slotDuration: number;
   isActive: boolean;
+  breakStartTime?: string; // Início do intervalo (almoço/pausa)
+  breakEndTime?: string; // Fim do intervalo (almoço/pausa)
 }
 
 interface ProfessionalScheduleConfigAdminProps {
@@ -54,6 +56,8 @@ interface AvailabilityForm {
   endTime: string;
   slotDuration: number;
   isActive: boolean;
+  breakStartTime?: string; // Início do intervalo (almoço/pausa)
+  breakEndTime?: string; // Fim do intervalo (almoço/pausa)
 }
 
 const DAYS_OF_WEEK = [
@@ -99,6 +103,46 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Função para gerar slots de tempo (considerando intervalo de almoço/pausa)
+  const generateTimeSlots = (startTime: string, endTime: string, slotDuration: number, breakStartTime?: string, breakEndTime?: string) => {
+    const slots = [];
+    const start = new Date(`2000-01-01T${startTime}:00`);
+    const end = new Date(`2000-01-01T${endTime}:00`);
+
+    // Converter intervalo para Date se fornecido
+    const breakStart = breakStartTime ? new Date(`2000-01-01T${breakStartTime}:00`) : null;
+    const breakEnd = breakEndTime ? new Date(`2000-01-01T${breakEndTime}:00`) : null;
+
+    let current = new Date(start);
+
+    while (current < end) {
+      const slotStart = current.toTimeString().slice(0, 5);
+      current.setMinutes(current.getMinutes() + slotDuration);
+      const slotEnd = current.toTimeString().slice(0, 5);
+
+      if (current <= end) {
+        const slotStartTime = new Date(`2000-01-01T${slotStart}:00`);
+        const slotEndTime = new Date(`2000-01-01T${slotEnd}:00`);
+
+        // Verificar se o slot não conflita com o intervalo
+        let isInBreak = false;
+        if (breakStart && breakEnd) {
+          // Slot conflita se inicia antes do fim do intervalo E termina depois do início do intervalo
+          isInBreak = slotStartTime < breakEnd && slotEndTime > breakStart;
+        }
+
+        if (!isInBreak) {
+          slots.push({
+            startTime: slotStart,
+            endTime: slotEnd
+          });
+        }
+      }
+    }
+
+    return slots;
+  };
 
   // Buscar profissionais da empresa
   const { data: professionals = [], isLoading: professionalsLoading } = useQuery({
@@ -235,6 +279,8 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
       isActive: true,
       dayOfWeek: 1,
       daysOfWeek: [1],
+      breakStartTime: undefined, // Intervalo opcional
+      breakEndTime: undefined, // Intervalo opcional
     });
   };
 
@@ -257,6 +303,8 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
       endTime: availability.endTime,
       slotDuration: availability.slotDuration,
       isActive: availability.isActive,
+      breakStartTime: availability.breakStartTime,
+      breakEndTime: availability.breakEndTime,
     });
     setShowModal(true);
   };
@@ -608,6 +656,48 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
                 </div>
               </div>
 
+              {/* Intervalo de Almoço/Pausa (Opcional) */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium">Intervalo de Almoço/Pausa</label>
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Opcional</span>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Define um período onde não serão gerados slots de agendamento (ex: horário de almoço)
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Início do Intervalo</label>
+                    <input
+                      type="time"
+                      value={formData.breakStartTime || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, breakStartTime: e.target.value || undefined }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ex: 12:00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Fim do Intervalo</label>
+                    <input
+                      type="time"
+                      value={formData.breakEndTime || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, breakEndTime: e.target.value || undefined }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ex: 13:00"
+                    />
+                  </div>
+                </div>
+                {formData.breakStartTime && formData.breakEndTime && (
+                  <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                    <p className="text-sm text-orange-800">
+                      ⏰ <strong>Intervalo configurado:</strong> {formData.breakStartTime} às {formData.breakEndTime}
+                      <br />
+                      <span className="text-orange-600">Nenhum slot será gerado durante este período.</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Duração dos Slots */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Duração dos Slots *</label>
@@ -630,21 +720,36 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-blue-800">
                     <strong>Preview:</strong> {
-                      Math.floor((
-                        (new Date(`2000-01-01T${formData.endTime}:00`).getTime() -
-                         new Date(`2000-01-01T${formData.startTime}:00`).getTime()) /
-                        (1000 * 60)
-                      ) / formData.slotDuration)
+                      (() => {
+                        const slotsPerDay = generateTimeSlots(
+                          formData.startTime,
+                          formData.endTime,
+                          formData.slotDuration,
+                          formData.breakStartTime,
+                          formData.breakEndTime
+                        ).length;
+                        return slotsPerDay;
+                      })()
                     } slots de {formData.slotDuration} min
                     {scheduleType === "recurring" && formData.daysOfWeek && formData.daysOfWeek.length > 1 &&
                       ` × ${formData.daysOfWeek.length} dias = ${
-                        Math.floor((
-                          (new Date(`2000-01-01T${formData.endTime}:00`).getTime() -
-                           new Date(`2000-01-01T${formData.startTime}:00`).getTime()) /
-                          (1000 * 60)
-                        ) / formData.slotDuration) * formData.daysOfWeek.length
+                        (() => {
+                          const slotsPerDay = generateTimeSlots(
+                            formData.startTime,
+                            formData.endTime,
+                            formData.slotDuration,
+                            formData.breakStartTime,
+                            formData.breakEndTime
+                          ).length;
+                          return slotsPerDay * formData.daysOfWeek.length;
+                        })()
                       } slots total`
                     }
+                    {formData.breakStartTime && formData.breakEndTime && (
+                      <span className="block mt-1 text-orange-700">
+                        ⚠️ Intervalo {formData.breakStartTime}-{formData.breakEndTime} excluído
+                      </span>
+                    )}
                   </p>
                 </div>
               )}

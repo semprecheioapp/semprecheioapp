@@ -32,6 +32,8 @@ interface ProfessionalAvailability {
   serviceId?: string;
   customPrice?: number;
   customDuration?: number;
+  breakStartTime?: string; // Início do intervalo (almoço/pausa)
+  breakEndTime?: string; // Fim do intervalo (almoço/pausa)
 }
 
 interface AvailabilityForm {
@@ -46,6 +48,8 @@ interface AvailabilityForm {
   customPrice?: number;
   customDuration?: number;
   slotDuration: number; // Duração do slot em minutos (30 ou 60)
+  breakStartTime?: string; // Início do intervalo (almoço/pausa)
+  breakEndTime?: string; // Fim do intervalo (almoço/pausa)
 }
 
 const DAYS_OF_WEEK = [
@@ -308,14 +312,20 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       dayOfWeek: 1, // Iniciar com segunda-feira
       daysOfWeek: [1], // Iniciar com segunda-feira selecionada
       slotDuration: 60,
+      breakStartTime: undefined, // Intervalo opcional
+      breakEndTime: undefined, // Intervalo opcional
     });
   };
 
-  // Função para gerar slots de tempo
-  const generateTimeSlots = (startTime: string, endTime: string, slotDuration: number) => {
+  // Função para gerar slots de tempo (considerando intervalo de almoço/pausa)
+  const generateTimeSlots = (startTime: string, endTime: string, slotDuration: number, breakStartTime?: string, breakEndTime?: string) => {
     const slots = [];
     const start = new Date(`2000-01-01T${startTime}:00`);
     const end = new Date(`2000-01-01T${endTime}:00`);
+
+    // Converter intervalo para Date se fornecido
+    const breakStart = breakStartTime ? new Date(`2000-01-01T${breakStartTime}:00`) : null;
+    const breakEnd = breakEndTime ? new Date(`2000-01-01T${breakEndTime}:00`) : null;
 
     let current = new Date(start);
 
@@ -325,10 +335,22 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       const slotEnd = current.toTimeString().slice(0, 5);
 
       if (current <= end) {
-        slots.push({
-          startTime: slotStart,
-          endTime: slotEnd
-        });
+        const slotStartTime = new Date(`2000-01-01T${slotStart}:00`);
+        const slotEndTime = new Date(`2000-01-01T${slotEnd}:00`);
+
+        // Verificar se o slot não conflita com o intervalo
+        let isInBreak = false;
+        if (breakStart && breakEnd) {
+          // Slot conflita se inicia antes do fim do intervalo E termina depois do início do intervalo
+          isInBreak = slotStartTime < breakEnd && slotEndTime > breakStart;
+        }
+
+        if (!isInBreak) {
+          slots.push({
+            startTime: slotStart,
+            endTime: slotEnd
+          });
+        }
       }
     }
 
@@ -464,6 +486,8 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       customPrice: availability.customPrice,
       customDuration: availability.customDuration || 60,
       slotDuration: availability.customDuration || 60,
+      breakStartTime: availability.breakStartTime,
+      breakEndTime: availability.breakEndTime,
     });
     setShowModal(true);
   };
@@ -990,6 +1014,46 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
               </div>
             </div>
 
+            {/* Intervalo de Almoço/Pausa (Opcional) */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Label className="text-base font-medium">Intervalo de Almoço/Pausa</Label>
+                <Badge variant="outline" className="text-xs">Opcional</Badge>
+              </div>
+              <p className="text-sm text-gray-600">
+                Define um período onde não serão gerados slots de agendamento (ex: horário de almoço)
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Início do Intervalo</Label>
+                  <Input
+                    type="time"
+                    value={formData.breakStartTime || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, breakStartTime: e.target.value || undefined }))}
+                    placeholder="Ex: 12:00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Fim do Intervalo</Label>
+                  <Input
+                    type="time"
+                    value={formData.breakEndTime || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, breakEndTime: e.target.value || undefined }))}
+                    placeholder="Ex: 13:00"
+                  />
+                </div>
+              </div>
+              {formData.breakStartTime && formData.breakEndTime && (
+                <div className="bg-orange-50 p-3 rounded-lg">
+                  <p className="text-sm text-orange-800">
+                    ⏰ <strong>Intervalo configurado:</strong> {formData.breakStartTime} às {formData.breakEndTime}
+                    <br />
+                    <span className="text-orange-600">Nenhum slot será gerado durante este período.</span>
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Preview dos Slots */}
             {formData.startTime && formData.endTime && (
               <div className="space-y-2">
@@ -997,7 +1061,13 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                 <div className="p-3 bg-gray-50 rounded-lg max-h-32 overflow-y-auto">
                   <div className="flex flex-wrap gap-1">
                     {(() => {
-                      const slots = generateTimeSlots(formData.startTime, formData.endTime, formData.slotDuration);
+                      const slots = generateTimeSlots(
+                        formData.startTime,
+                        formData.endTime,
+                        formData.slotDuration,
+                        formData.breakStartTime,
+                        formData.breakEndTime
+                      );
                       return slots.map((slot, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
                           {slot.startTime}-{slot.endTime}
@@ -1007,7 +1077,13 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
                     {(() => {
-                      const slotsPerDay = generateTimeSlots(formData.startTime, formData.endTime, formData.slotDuration).length;
+                      const slotsPerDay = generateTimeSlots(
+                        formData.startTime,
+                        formData.endTime,
+                        formData.slotDuration,
+                        formData.breakStartTime,
+                        formData.breakEndTime
+                      ).length;
                       const selectedDays = formData.daysOfWeek && formData.daysOfWeek.length > 0
                         ? formData.daysOfWeek.length
                         : (formData.dayOfWeek !== undefined ? 1 : 0);
