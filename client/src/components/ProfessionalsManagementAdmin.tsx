@@ -182,15 +182,21 @@ const ProfessionalsManagementAdmin: React.FC<ProfessionalsManagementAdminProps> 
   };
 
   const openNewModal = () => {
+    console.log('🔍 openNewModal chamado');
+    console.log('🔍 professionals.length:', professionals.length);
+
     // Verificar limite de 3 profissionais
     if (professionals.length >= 3) {
+      console.log('🔍 Limite atingido, abrindo WhatsApp modal');
       setShowWhatsAppModal(true);
       return;
     }
-    
+
+    console.log('🔍 Abrindo modal de novo profissional');
     setEditingProfessional(null);
     resetForm();
     setShowModal(true);
+    console.log('🔍 showModal definido como true');
   };
 
   const handleEdit = (professional: Professional) => {
@@ -254,6 +260,12 @@ Quantidade desejada: ${requestedQuantity}`;
   const currentCount = professionals.length;
   const maxCount = 3;
   const isAtLimit = currentCount >= maxCount;
+
+  console.log('🔍 ProfessionalsManagementAdmin render');
+  console.log('🔍 showModal:', showModal);
+  console.log('🔍 showWhatsAppModal:', showWhatsAppModal);
+  console.log('🔍 currentCount:', currentCount);
+  console.log('🔍 isAtLimit:', isAtLimit);
 
   return (
     <div className="space-y-6">
@@ -402,6 +414,13 @@ Quantidade desejada: ${requestedQuantity}`;
               {editingProfessional ? "Editar Profissional" : "Novo Profissional"}
             </DialogTitle>
           </DialogHeader>
+
+          {/* Debug info */}
+          {showModal && (
+            <div className="text-xs text-gray-500 mb-2">
+              Debug: Modal aberto - {editingProfessional ? 'Editando' : 'Novo'}
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
