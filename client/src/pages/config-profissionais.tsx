@@ -317,7 +317,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     });
   };
 
-  // Função para gerar slots de tempo (considerando intervalo de almoço/pausa)
+  // Função para gerar slots de tempo (incluindo slots de intervalo com is_active: false)
   const generateTimeSlots = (startTime: string, endTime: string, slotDuration: number, breakStartTime?: string, breakEndTime?: string) => {
     const slots = [];
     const start = new Date(`2000-01-01T${startTime}:00`);
@@ -338,19 +338,18 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
         const slotStartTime = new Date(`2000-01-01T${slotStart}:00`);
         const slotEndTime = new Date(`2000-01-01T${slotEnd}:00`);
 
-        // Verificar se o slot não conflita com o intervalo
+        // Verificar se o slot está no intervalo de pausa
         let isInBreak = false;
         if (breakStart && breakEnd) {
-          // Slot conflita se inicia antes do fim do intervalo E termina depois do início do intervalo
+          // Slot está no intervalo se inicia antes do fim do intervalo E termina depois do início do intervalo
           isInBreak = slotStartTime < breakEnd && slotEndTime > breakStart;
         }
 
-        if (!isInBreak) {
-          slots.push({
-            startTime: slotStart,
-            endTime: slotEnd
-          });
-        }
+        slots.push({
+          startTime: slotStart,
+          endTime: slotEnd,
+          isActive: !isInBreak // false se estiver no intervalo, true caso contrário
+        });
       }
     }
 
@@ -401,12 +400,10 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       professionalId: formData.professionalId,
       date: formData.date || undefined,
       dayOfWeek: formData.dayOfWeek !== undefined ? formData.dayOfWeek : undefined,
-      isActive: formData.isActive,
       serviceId: formData.serviceId,
       customPrice: formData.customPrice,
       customDuration: formData.slotDuration,
-      breakStartTime: formData.breakStartTime || null, // Enviar como null se vazio
-      breakEndTime: formData.breakEndTime || null, // Enviar como null se vazio
+      // isActive será definido individualmente para cada slot
     };
 
     if (editingAvailability) {
@@ -437,6 +434,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
             dayOfWeek: dayOfWeek,
             startTime: slot.startTime,
             endTime: slot.endTime,
+            isActive: slot.isActive, // Usar o isActive calculado do slot
           });
         });
       });
@@ -1077,31 +1075,40 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                         formData.breakEndTime
                       );
                       return slots.map((slot, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge
+                          key={index}
+                          variant={slot.isActive ? "outline" : "secondary"}
+                          className={`text-xs ${slot.isActive ? '' : 'bg-red-100 text-red-700 border-red-300'}`}
+                        >
                           {slot.startTime}-{slot.endTime}
+                          {!slot.isActive && ' 🚫'}
                         </Badge>
                       ));
                     })()}
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
                     {(() => {
-                      const slotsPerDay = generateTimeSlots(
+                      const slots = generateTimeSlots(
                         formData.startTime,
                         formData.endTime,
                         formData.slotDuration,
                         formData.breakStartTime,
                         formData.breakEndTime
-                      ).length;
+                      );
+                      const activeSlots = slots.filter(slot => slot.isActive).length;
+                      const inactiveSlots = slots.filter(slot => !slot.isActive).length;
                       const selectedDays = formData.daysOfWeek && formData.daysOfWeek.length > 0
                         ? formData.daysOfWeek.length
                         : (formData.dayOfWeek !== undefined ? 1 : 0);
-                      const totalSlots = slotsPerDay * selectedDays;
 
-                      if (selectedDays > 1) {
-                        return `${slotsPerDay} slots por dia × ${selectedDays} dias = ${totalSlots} slots totais`;
-                      } else {
-                        return `Total: ${slotsPerDay} slots`;
+                      let result = `${activeSlots} slots ativos`;
+                      if (inactiveSlots > 0) {
+                        result += ` + ${inactiveSlots} slots inativos (intervalo)`;
                       }
+                      if (selectedDays > 1) {
+                        result += ` × ${selectedDays} dias = ${(activeSlots + inactiveSlots) * selectedDays} slots totais`;
+                      }
+                      return result;
                     })()}
                   </p>
                 </div>

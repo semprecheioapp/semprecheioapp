@@ -104,7 +104,7 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Função para gerar slots de tempo (considerando intervalo de almoço/pausa)
+  // Função para gerar slots de tempo (incluindo slots de intervalo com is_active: false)
   const generateTimeSlots = (startTime: string, endTime: string, slotDuration: number, breakStartTime?: string, breakEndTime?: string) => {
     const slots = [];
     const start = new Date(`2000-01-01T${startTime}:00`);
@@ -125,19 +125,18 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
         const slotStartTime = new Date(`2000-01-01T${slotStart}:00`);
         const slotEndTime = new Date(`2000-01-01T${slotEnd}:00`);
 
-        // Verificar se o slot não conflita com o intervalo
+        // Verificar se o slot está no intervalo de pausa
         let isInBreak = false;
         if (breakStart && breakEnd) {
-          // Slot conflita se inicia antes do fim do intervalo E termina depois do início do intervalo
+          // Slot está no intervalo se inicia antes do fim do intervalo E termina depois do início do intervalo
           isInBreak = slotStartTime < breakEnd && slotEndTime > breakStart;
         }
 
-        if (!isInBreak) {
-          slots.push({
-            startTime: slotStart,
-            endTime: slotEnd
-          });
-        }
+        slots.push({
+          startTime: slotStart,
+          endTime: slotEnd,
+          isActive: !isInBreak // false se estiver no intervalo, true caso contrário
+        });
       }
     }
 
@@ -327,11 +326,9 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
       return;
     }
 
-    // Preparar dados com campos de intervalo
+    // Preparar dados (sem campos de intervalo - usamos apenas is_active)
     const dataToSubmit = {
       ...formData,
-      breakStartTime: formData.breakStartTime || null, // Enviar como null se vazio
-      breakEndTime: formData.breakEndTime || null, // Enviar como null se vazio
     };
 
     if (editingAvailability) {
@@ -728,33 +725,31 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
                   <p className="text-sm text-blue-800">
                     <strong>Preview:</strong> {
                       (() => {
-                        const slotsPerDay = generateTimeSlots(
+                        const slots = generateTimeSlots(
                           formData.startTime,
                           formData.endTime,
                           formData.slotDuration,
                           formData.breakStartTime,
                           formData.breakEndTime
-                        ).length;
-                        return slotsPerDay;
+                        );
+                        const activeSlots = slots.filter(slot => slot.isActive).length;
+                        const inactiveSlots = slots.filter(slot => !slot.isActive).length;
+
+                        let result = `${activeSlots} slots ativos`;
+                        if (inactiveSlots > 0) {
+                          result += ` + ${inactiveSlots} inativos (intervalo)`;
+                        }
+                        result += ` de ${formData.slotDuration} min`;
+
+                        return result;
                       })()
-                    } slots de {formData.slotDuration} min
+                    }
                     {scheduleType === "recurring" && formData.daysOfWeek && formData.daysOfWeek.length > 1 &&
-                      ` × ${formData.daysOfWeek.length} dias = ${
-                        (() => {
-                          const slotsPerDay = generateTimeSlots(
-                            formData.startTime,
-                            formData.endTime,
-                            formData.slotDuration,
-                            formData.breakStartTime,
-                            formData.breakEndTime
-                          ).length;
-                          return slotsPerDay * formData.daysOfWeek.length;
-                        })()
-                      } slots total`
+                      ` × ${formData.daysOfWeek.length} dias`
                     }
                     {formData.breakStartTime && formData.breakEndTime && (
                       <span className="block mt-1 text-orange-700">
-                        ⚠️ Intervalo {formData.breakStartTime}-{formData.breakEndTime} excluído
+                        🚫 Intervalo {formData.breakStartTime}-{formData.breakEndTime} será inativo
                       </span>
                     )}
                   </p>
