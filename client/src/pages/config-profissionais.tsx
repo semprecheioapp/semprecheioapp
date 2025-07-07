@@ -749,14 +749,11 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                       dayOfWeek: 1
                     }));
                   } else {
-                    // Para data específica, calcular o dia da semana da data atual
+                    // Para data específica, remover dayOfWeek e definir data
                     const today = new Date().toISOString().split('T')[0];
-                    const todayDate = new Date(today + 'T00:00:00');
-                    const calculatedDayOfWeek = todayDate.getDay();
-
                     setFormData(prev => ({
                       ...prev,
-                      dayOfWeek: calculatedDayOfWeek,
+                      dayOfWeek: undefined,
                       date: today
                     }));
                   }
@@ -800,28 +797,13 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                   value={formData.date || ""}
                   onChange={(e) => {
                     const selectedDate = e.target.value;
-                    let calculatedDayOfWeek = undefined;
-
-                    // Calcular o dia da semana se uma data foi selecionada
-                    if (selectedDate) {
-                      const date = new Date(selectedDate + 'T00:00:00'); // Evitar problemas de timezone
-                      calculatedDayOfWeek = date.getDay(); // 0=domingo, 1=segunda, etc.
-                    }
-
                     setFormData(prev => ({
                       ...prev,
-                      date: selectedDate,
-                      dayOfWeek: calculatedDayOfWeek
+                      date: selectedDate
                     }));
                   }}
                   required
                 />
-                {/* Mostrar o dia da semana calculado */}
-                {formData.date && formData.dayOfWeek !== undefined && (
-                  <p className="text-sm text-gray-600">
-                    Dia da semana: <strong>{DAYS_OF_WEEK.find(d => d.value === formData.dayOfWeek)?.label}</strong>
-                  </p>
-                )}
               </div>
             )}
 
