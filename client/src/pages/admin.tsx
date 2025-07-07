@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import CalendarView from '@/components/CalendarView';
 import ProfessionalScheduleConfig from '@/components/ProfessionalScheduleConfig';
+import ProfessionalScheduleConfigAdmin from '@/components/ProfessionalScheduleConfigAdmin';
 import ProfessionalsManagement from '@/components/ProfessionalsManagement';
 import ProfessionalsManagementAdmin from '@/components/ProfessionalsManagementAdmin';
 import ServicesManagement from '@/components/ServicesManagement';
@@ -851,7 +852,10 @@ const AdminEmpresa: React.FC = () => {
                   {currentClient.name}
                 </Badge>
               </div>
-              <ProfessionalScheduleConfig clientId={currentClient.id} />
+              <ProfessionalScheduleConfigAdmin
+                clientId={currentClient.id}
+                clientName={currentClient.name}
+              />
             </div>
           )}
 
