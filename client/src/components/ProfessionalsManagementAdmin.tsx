@@ -406,90 +406,91 @@ Quantidade desejada: ${requestedQuantity}`;
         </CardContent>
       </Card>
 
-      {/* Modal de Criação/Edição */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingProfessional ? "Editar Profissional" : "Novo Profissional"}
-            </DialogTitle>
-          </DialogHeader>
-
-          {/* Debug info */}
-          {showModal && (
-            <div className="text-xs text-gray-500 mb-2">
-              Debug: Modal aberto - {editingProfessional ? 'Editando' : 'Novo'}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nome Completo *</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Ex: Dr. João Silva"
-                required
-              />
+      {/* Modal de Criação/Edição - VERSÃO SIMPLIFICADA PARA DEBUG */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">
+                {editingProfessional ? "Editar Profissional" : "Novo Profissional"}
+              </h2>
+              <p className="text-sm text-gray-500">
+                Debug: Modal funcionando - {editingProfessional ? 'Editando' : 'Novo'}
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Email *</Label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="joao@exemplo.com"
-                required
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nome Completo *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Ex: Dr. João Silva"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                placeholder="(11) 99999-9999"
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="joao@exemplo.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Especialidade</Label>
-              <Select value={formData.specialtyId} onValueChange={(value) => setFormData(prev => ({ ...prev, specialtyId: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma especialidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Sem especialidade</SelectItem>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Telefone</label>
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="(11) 99999-9999"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Especialidade</label>
+                <select
+                  value={formData.specialtyId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, specialtyId: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Sem especialidade</option>
                   {specialties.map((specialty: Specialty) => (
-                    <SelectItem key={specialty.id} value={specialty.id}>
+                    <option key={specialty.id} value={specialty.id}>
                       {specialty.name}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+                </select>
+              </div>
 
-            <div className="flex space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowModal(false)}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={createProfessionalMutation.isPending || updateProfessionalMutation.isPending}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                {editingProfessional ? "Atualizar" : "Criar"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <div className="flex space-x-2 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={createProfessionalMutation.isPending || updateProfessionalMutation.isPending}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {editingProfessional ? "Atualizar" : "Criar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Solicitação WhatsApp */}
       <Dialog open={showWhatsAppModal} onOpenChange={setShowWhatsAppModal}>
