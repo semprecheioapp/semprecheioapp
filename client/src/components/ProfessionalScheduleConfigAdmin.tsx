@@ -327,23 +327,30 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
       return;
     }
 
+    // Preparar dados com campos de intervalo
+    const dataToSubmit = {
+      ...formData,
+      breakStartTime: formData.breakStartTime || null, // Enviar como null se vazio
+      breakEndTime: formData.breakEndTime || null, // Enviar como null se vazio
+    };
+
     if (editingAvailability) {
       updateAvailabilityMutation.mutate({
         id: editingAvailability.id,
-        data: formData,
+        data: dataToSubmit,
       });
     } else {
       // Lógica para múltiplos dias
       if (scheduleType === "recurring" && formData.daysOfWeek && formData.daysOfWeek.length > 1) {
         // Criar horários para múltiplos dias
-        const promises = formData.daysOfWeek.map(dayOfWeek => 
+        const promises = formData.daysOfWeek.map(dayOfWeek =>
           createAvailabilityMutation.mutateAsync({
-            ...formData,
+            ...dataToSubmit,
             dayOfWeek,
             date: undefined,
           })
         );
-        
+
         Promise.all(promises).then(() => {
           toast({
             title: "Sucesso!",
@@ -357,7 +364,7 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
           });
         });
       } else {
-        createAvailabilityMutation.mutate(formData);
+        createAvailabilityMutation.mutate(dataToSubmit);
       }
     }
   };

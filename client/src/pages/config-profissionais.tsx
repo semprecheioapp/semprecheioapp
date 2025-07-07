@@ -378,8 +378,14 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       return;
     }
 
-    // Gerar slots de tempo
-    const timeSlots = generateTimeSlots(formData.startTime, formData.endTime, formData.slotDuration);
+    // Gerar slots de tempo (considerando intervalo)
+    const timeSlots = generateTimeSlots(
+      formData.startTime,
+      formData.endTime,
+      formData.slotDuration,
+      formData.breakStartTime,
+      formData.breakEndTime
+    );
 
     if (timeSlots.length === 0) {
       toast({
@@ -399,6 +405,8 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       serviceId: formData.serviceId,
       customPrice: formData.customPrice,
       customDuration: formData.slotDuration,
+      breakStartTime: formData.breakStartTime || null, // Enviar como null se vazio
+      breakEndTime: formData.breakEndTime || null, // Enviar como null se vazio
     };
 
     if (editingAvailability) {
