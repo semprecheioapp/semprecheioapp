@@ -842,8 +842,8 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                               const newDays = currentDays.filter(d => d !== day.value);
                               setFormData(prev => ({
                                 ...prev,
-                                daysOfWeek: newDays.length > 0 ? newDays : undefined,
-                                dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
+                                daysOfWeek: newDays.length > 0 ? newDays : [], // Manter array vazio em vez de undefined
+                                dayOfWeek: newDays.length === 1 ? newDays[0] : (newDays.length === 0 ? 1 : undefined) // Manter modo recorrente
                               }));
                             } else {
                               // Adicionar dia à seleção
