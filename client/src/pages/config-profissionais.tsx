@@ -68,6 +68,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
   const [selectedClientId, setSelectedClientId] = useState<string>("all");
   const [showModal, setShowModal] = useState(false);
   const [editingAvailability, setEditingAvailability] = useState<ProfessionalAvailability | null>(null);
+  const [scheduleType, setScheduleType] = useState<"recurring" | "specific">("recurring"); // Estado separado para tipo
   const [formData, setFormData] = useState<AvailabilityForm>({
     professionalId: "",
     startTime: "09:00",
@@ -297,14 +298,15 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
   });
 
   const resetForm = () => {
+    setScheduleType("recurring"); // Reset para modo recorrente
     setFormData({
       professionalId: selectedProfessional,
       startTime: "09:00",
       endTime: "18:00",
       isActive: true,
       date: undefined,
-      dayOfWeek: undefined,
-      daysOfWeek: undefined,
+      dayOfWeek: 1, // Iniciar com segunda-feira
+      daysOfWeek: [1], // Iniciar com segunda-feira selecionada
       slotDuration: 60,
     });
   };
@@ -448,10 +450,13 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
 
   const handleEdit = (availability: ProfessionalAvailability) => {
     setEditingAvailability(availability);
+    // Definir tipo baseado nos dados do horário
+    setScheduleType(availability.dayOfWeek !== undefined ? "recurring" : "specific");
     setFormData({
       professionalId: availability.professionalId,
       date: availability.date,
       dayOfWeek: availability.dayOfWeek,
+      daysOfWeek: availability.dayOfWeek !== undefined ? [availability.dayOfWeek] : undefined,
       startTime: availability.startTime,
       endTime: availability.endTime,
       isActive: availability.isActive,
@@ -779,8 +784,9 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
             <div className="space-y-2">
               <Label>Tipo de Horário</Label>
               <Select
-                value={formData.dayOfWeek !== undefined ? "recurring" : "specific"}
-                onValueChange={(value) => {
+                value={scheduleType}
+                onValueChange={(value: "recurring" | "specific") => {
+                  setScheduleType(value);
                   if (value === "recurring") {
                     setFormData(prev => ({
                       ...prev,
@@ -811,7 +817,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
             </div>
 
             {/* Dia da Semana ou Data */}
-            {formData.dayOfWeek !== undefined ? (
+            {scheduleType === "recurring" ? (
               <div className="space-y-2">
                 <Label>Dias da Semana</Label>
                 <div className="grid grid-cols-2 gap-3">
@@ -838,21 +844,21 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                           setTimeout(() => {
                             if (isChecked) {
                               // Remover dia da seleção
-                              const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+                              const currentDays = formData.daysOfWeek || [];
                               const newDays = currentDays.filter(d => d !== day.value);
                               setFormData(prev => ({
                                 ...prev,
-                                daysOfWeek: newDays.length > 0 ? newDays : [], // Manter array vazio em vez de undefined
-                                dayOfWeek: newDays.length === 1 ? newDays[0] : (newDays.length === 0 ? 1 : undefined) // Manter modo recorrente
+                                daysOfWeek: newDays,
+                                dayOfWeek: newDays.length === 1 ? newDays[0] : 1 // Sempre manter um valor para modo recorrente
                               }));
                             } else {
                               // Adicionar dia à seleção
-                              const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+                              const currentDays = formData.daysOfWeek || [];
                               const newDays = [...currentDays, day.value].filter((v, i, a) => a.indexOf(v) === i).sort();
                               setFormData(prev => ({
                                 ...prev,
                                 daysOfWeek: newDays,
-                                dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
+                                dayOfWeek: newDays.length === 1 ? newDays[0] : 1 // Sempre manter um valor para modo recorrente
                               }));
                             }
                           }, 0);
