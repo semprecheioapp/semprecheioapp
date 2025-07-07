@@ -38,6 +38,7 @@ interface AvailabilityForm {
   professionalId: string;
   date?: string;
   dayOfWeek?: number;
+  daysOfWeek?: number[]; // Para seleção múltipla de dias
   startTime: string;
   endTime: string;
   isActive: boolean;
@@ -297,6 +298,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       isActive: true,
       date: undefined,
       dayOfWeek: undefined,
+      daysOfWeek: undefined,
       slotDuration: 60,
     });
   };
@@ -382,12 +384,24 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
         data: submitData,
       });
     } else {
-      // Para criação, criar múltiplos slots
-      const slotsToCreate = timeSlots.map(slot => ({
-        ...baseData,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-      }));
+      // Para criação, criar múltiplos slots considerando múltiplos dias
+      const daysToCreate = formData.daysOfWeek && formData.daysOfWeek.length > 0
+        ? formData.daysOfWeek
+        : (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+
+      const slotsToCreate = [];
+
+      // Para cada dia selecionado, criar todos os slots de tempo
+      daysToCreate.forEach(dayOfWeek => {
+        timeSlots.forEach(slot => {
+          slotsToCreate.push({
+            ...baseData,
+            dayOfWeek: dayOfWeek,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+          });
+        });
+      });
 
       // Criar todos os slots
       Promise.all(
@@ -407,9 +421,14 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
         queryClient.invalidateQueries({ queryKey: ["/api/professional-availability"] });
         setShowModal(false);
         resetForm();
+
+        const totalSlots = slotsToCreate.length;
+        const daysCount = daysToCreate.length;
+        const slotsPerDay = timeSlots.length;
+
         toast({
           title: "Sucesso!",
-          description: `${timeSlots.length} slots de horário criados com sucesso.`,
+          description: `${totalSlots} slots criados para ${daysCount} dia(s) da semana (${slotsPerDay} slots por dia).`,
         });
       }).catch(error => {
         toast({
@@ -746,7 +765,8 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                     setFormData(prev => ({
                       ...prev,
                       date: undefined,
-                      dayOfWeek: 1
+                      dayOfWeek: 1,
+                      daysOfWeek: [1] // Iniciar com segunda-feira selecionada
                     }));
                   } else {
                     // Para data específica, remover dayOfWeek e definir data
@@ -754,6 +774,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                     setFormData(prev => ({
                       ...prev,
                       dayOfWeek: undefined,
+                      daysOfWeek: undefined,
                       date: today
                     }));
                   }
@@ -772,22 +793,43 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
             {/* Dia da Semana ou Data */}
             {formData.dayOfWeek !== undefined ? (
               <div className="space-y-2">
-                <Label>Dia da Semana</Label>
-                <Select
-                  value={formData.dayOfWeek?.toString()}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, dayOfWeek: parseInt(value) }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS_OF_WEEK.map(day => (
-                      <SelectItem key={day.value} value={day.value.toString()}>
-                        {day.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Dias da Semana</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {DAYS_OF_WEEK.map(day => (
+                    <label key={day.value} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.daysOfWeek?.includes(day.value) || (formData.dayOfWeek === day.value)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            // Adicionar dia à seleção
+                            const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+                            const newDays = [...currentDays, day.value].filter((v, i, a) => a.indexOf(v) === i).sort();
+                            setFormData(prev => ({
+                              ...prev,
+                              daysOfWeek: newDays,
+                              dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
+                            }));
+                          } else {
+                            // Remover dia da seleção
+                            const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+                            const newDays = currentDays.filter(d => d !== day.value);
+                            setFormData(prev => ({
+                              ...prev,
+                              daysOfWeek: newDays.length > 0 ? newDays : undefined,
+                              dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
+                            }));
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm">{day.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Selecione um ou múltiplos dias para criar horários recorrentes. Evita cadastros repetitivos.
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -911,7 +953,19 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                     })()}
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
-                    Total: {generateTimeSlots(formData.startTime, formData.endTime, formData.slotDuration).length} slots
+                    {(() => {
+                      const slotsPerDay = generateTimeSlots(formData.startTime, formData.endTime, formData.slotDuration).length;
+                      const selectedDays = formData.daysOfWeek && formData.daysOfWeek.length > 0
+                        ? formData.daysOfWeek.length
+                        : (formData.dayOfWeek !== undefined ? 1 : 0);
+                      const totalSlots = slotsPerDay * selectedDays;
+
+                      if (selectedDays > 1) {
+                        return `${slotsPerDay} slots por dia × ${selectedDays} dias = ${totalSlots} slots totais`;
+                      } else {
+                        return `Total: ${slotsPerDay} slots`;
+                      }
+                    })()}
                   </p>
                 </div>
               </div>
