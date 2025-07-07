@@ -796,11 +796,13 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                 <Label>Dias da Semana</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {DAYS_OF_WEEK.map(day => (
-                    <label key={day.value} className="flex items-center space-x-2 cursor-pointer">
+                    <div key={day.value} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
+                        id={`day-${day.value}`}
                         checked={formData.daysOfWeek?.includes(day.value) || (formData.dayOfWeek === day.value)}
                         onChange={(e) => {
+                          e.stopPropagation(); // Impede propagação do evento
                           if (e.target.checked) {
                             // Adicionar dia à seleção
                             const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
@@ -823,8 +825,10 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                         }}
                         className="rounded border-gray-300"
                       />
-                      <span className="text-sm">{day.label}</span>
-                    </label>
+                      <label htmlFor={`day-${day.value}`} className="text-sm cursor-pointer">
+                        {day.label}
+                      </label>
+                    </div>
                   ))}
                 </div>
                 <p className="text-xs text-gray-500">
