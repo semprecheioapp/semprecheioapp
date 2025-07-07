@@ -812,18 +812,33 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
               <Label>Duração dos Slots</Label>
               <Select
                 value={formData.slotDuration.toString()}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, slotDuration: parseInt(value) }))}
+                onValueChange={(value) => {
+                  const duration = parseInt(value);
+                  // Validação: deve ser múltiplo de 5 minutos
+                  if (duration % 5 === 0) {
+                    setFormData(prev => ({ ...prev, slotDuration: duration }));
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="5">5 minutos</SelectItem>
+                  <SelectItem value="10">10 minutos</SelectItem>
+                  <SelectItem value="15">15 minutos</SelectItem>
+                  <SelectItem value="20">20 minutos</SelectItem>
                   <SelectItem value="30">30 minutos</SelectItem>
+                  <SelectItem value="45">45 minutos</SelectItem>
                   <SelectItem value="60">1 hora</SelectItem>
                   <SelectItem value="90">1 hora e 30 minutos</SelectItem>
                   <SelectItem value="120">2 horas</SelectItem>
+                  <SelectItem value="180">3 horas</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-gray-500">
+                Define a duração de cada slot de atendimento. Slots menores permitem maior flexibilidade de agendamento.
+              </p>
             </div>
 
             {/* Serviço Associado - Campo obrigatório */}
