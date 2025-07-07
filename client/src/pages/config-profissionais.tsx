@@ -90,15 +90,21 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
   });
 
   // Buscar profissionais
-  const { data: professionals = [], isLoading: professionalsLoading } = useQuery({
+  const { data: professionals = [], isLoading: professionalsLoading, error: professionalsError } = useQuery({
     queryKey: ["/api/professionals", isCompanyAdmin ? companyId : "all"],
     queryFn: async () => {
       const url = isCompanyAdmin && companyId
         ? `/api/professionals?client_id=${companyId}`
         : "/api/professionals";
+      console.log("🔍 Buscando profissionais:", url);
       const response = await fetch(url, { credentials: 'include' });
-      if (!response.ok) throw new Error("Erro ao carregar profissionais");
-      return response.json();
+      if (!response.ok) {
+        console.error("❌ Erro ao buscar profissionais:", response.status, response.statusText);
+        throw new Error("Erro ao carregar profissionais");
+      }
+      const data = await response.json();
+      console.log("✅ Profissionais carregados:", data.length, data);
+      return data;
     },
   });
 
@@ -598,21 +604,35 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Escolha um profissional..." />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredProfessionals.map((professional: Professional) => {
-                const client = clientsData?.find((c: any) => c.id === professional.clientId);
-                return (
-                  <SelectItem key={professional.id} value={professional.id}>
-                    {professional.name} - {professional.email} ({client?.name || "Empresa não definida"})
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          {professionalsLoading ? (
+            <div className="text-center py-4">
+              <p className="text-gray-600">Carregando profissionais...</p>
+            </div>
+          ) : professionalsError ? (
+            <div className="text-center py-4">
+              <p className="text-red-600">❌ Erro ao carregar profissionais: {professionalsError.message}</p>
+            </div>
+          ) : filteredProfessionals.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-gray-600">⚠️ Nenhum profissional encontrado para a empresa selecionada.</p>
+            </div>
+          ) : (
+            <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Escolha um profissional..." />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredProfessionals.map((professional: Professional) => {
+                  const client = clientsData?.find((c: any) => c.id === professional.clientId);
+                  return (
+                    <SelectItem key={professional.id} value={professional.id}>
+                      {professional.name} - {professional.email} ({client?.name || "Empresa não definida"})
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          )}
         </CardContent>
       </Card>
 
@@ -794,25 +814,22 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
             {formData.dayOfWeek !== undefined ? (
               <div className="space-y-2">
                 <Label>Dias da Semana</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {DAYS_OF_WEEK.map(day => (
-                    <div key={day.value} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`day-${day.value}`}
-                        checked={formData.daysOfWeek?.includes(day.value) || (formData.dayOfWeek === day.value)}
-                        onChange={(e) => {
-                          e.stopPropagation(); // Impede propagação do evento
-                          if (e.target.checked) {
-                            // Adicionar dia à seleção
-                            const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
-                            const newDays = [...currentDays, day.value].filter((v, i, a) => a.indexOf(v) === i).sort();
-                            setFormData(prev => ({
-                              ...prev,
-                              daysOfWeek: newDays,
-                              dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
-                            }));
-                          } else {
+                <div className="grid grid-cols-2 gap-3">
+                  {DAYS_OF_WEEK.map(day => {
+                    const isChecked = formData.daysOfWeek?.includes(day.value) || (formData.dayOfWeek === day.value);
+                    return (
+                      <div
+                        key={day.value}
+                        className={`flex items-center space-x-2 p-2 rounded border cursor-pointer transition-colors ${
+                          isChecked
+                            ? 'bg-blue-50 border-blue-300'
+                            : 'bg-white border-gray-200 hover:bg-gray-50'
+                        }`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          if (isChecked) {
                             // Remover dia da seleção
                             const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
                             const newDays = currentDays.filter(d => d !== day.value);
@@ -821,15 +838,33 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                               daysOfWeek: newDays.length > 0 ? newDays : undefined,
                               dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
                             }));
+                          } else {
+                            // Adicionar dia à seleção
+                            const currentDays = formData.daysOfWeek || (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+                            const newDays = [...currentDays, day.value].filter((v, i, a) => a.indexOf(v) === i).sort();
+                            setFormData(prev => ({
+                              ...prev,
+                              daysOfWeek: newDays,
+                              dayOfWeek: newDays.length === 1 ? newDays[0] : undefined
+                            }));
                           }
                         }}
-                        className="rounded border-gray-300"
-                      />
-                      <label htmlFor={`day-${day.value}`} className="text-sm cursor-pointer">
-                        {day.label}
-                      </label>
-                    </div>
-                  ))}
+                      >
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                          isChecked
+                            ? 'bg-blue-600 border-blue-600'
+                            : 'border-gray-300'
+                        }`}>
+                          {isChecked && (
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium">{day.label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
                 <p className="text-xs text-gray-500">
                   Selecione um ou múltiplos dias para criar horários recorrentes. Evita cadastros repetitivos.
