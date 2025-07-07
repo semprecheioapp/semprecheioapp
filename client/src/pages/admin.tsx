@@ -14,6 +14,9 @@ import { Label } from '@/components/ui/label';
 import CalendarView from '@/components/CalendarView';
 import ProfessionalScheduleConfig from '@/components/ProfessionalScheduleConfig';
 import ProfessionalsManagement from '@/components/ProfessionalsManagement';
+import ProfessionalsManagementAdmin from '@/components/ProfessionalsManagementAdmin';
+import ServicesManagement from '@/components/ServicesManagement';
+import SpecialtiesManagement from '@/components/SpecialtiesManagement';
 import { CompaniesManagement } from '@/components/CompaniesManagement';
 
 interface User {
@@ -832,7 +835,11 @@ const AdminEmpresa: React.FC = () => {
                   {currentClient.name}
                 </Badge>
               </div>
-              <ProfessionalsManagement clientId={currentClient.id} clientName={currentClient.name} />
+              <ProfessionalsManagementAdmin
+                clientId={currentClient.id}
+                clientName={currentClient.name}
+                userEmail={user.email}
+              />
             </div>
           )}
 
@@ -856,29 +863,10 @@ const AdminEmpresa: React.FC = () => {
                   {currentClient.name}
                 </Badge>
               </div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Tag className="h-5 w-5" />
-                    <span>Especialidades</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Gerencie as especialidades oferecidas pela sua empresa
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <Tag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Especialidades</h3>
-                    <p className="text-gray-500 mb-4">
-                      Cadastre e gerencie especialidades de {currentClient.name}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Interface de especialidades em desenvolvimento...
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <SpecialtiesManagement
+                clientId={currentClient.id}
+                clientName={currentClient.name}
+              />
             </div>
           )}
 
@@ -890,67 +878,10 @@ const AdminEmpresa: React.FC = () => {
                   {currentClient?.name}
                 </Badge>
               </div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Briefcase className="h-5 w-5" />
-                    <span>Serviços da Empresa</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Gerencie os serviços oferecidos por {currentClient?.name}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {servicesLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                      <p className="mt-2 text-gray-500">Carregando serviços...</p>
-                    </div>
-                  ) : servicesData && servicesData.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {servicesData.map((service: any) => (
-                          <Card key={service.id} className="border-l-4 border-l-blue-500">
-                            <CardHeader className="pb-3">
-                              <CardTitle className="text-lg">{service.name}</CardTitle>
-                              <Badge variant="outline" className="w-fit">
-                                {service.category}
-                              </Badge>
-                            </CardHeader>
-                            <CardContent>
-                              <p className="text-sm text-gray-600 mb-3">{service.description}</p>
-                              <div className="flex justify-between items-center text-sm">
-                                <span className="font-medium text-green-600">
-                                  R$ {service.price?.toFixed(2)}
-                                </span>
-                                <span className="text-gray-500">
-                                  {service.duration} min
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                      <div className="text-center pt-4">
-                        <p className="text-sm text-gray-500">
-                          Total: {servicesData.length} serviço(s) cadastrado(s)
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum serviço encontrado</h3>
-                      <p className="text-gray-500 mb-4">
-                        Ainda não há serviços cadastrados para {currentClient?.name}
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        Entre em contato com o administrador para cadastrar serviços.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <ServicesManagement
+                clientId={currentClient.id}
+                clientName={currentClient.name}
+              />
             </div>
           )}
 
