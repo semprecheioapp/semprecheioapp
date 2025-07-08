@@ -1943,47 +1943,130 @@ export class ClientsAuthStorage implements IStorage {
   async generateFutureAvailability(professionalId: string, months: number): Promise<any> {
     console.log("🔄 Iniciando generateFutureAvailability:", { professionalId, months });
 
-    const currentDate = new Date();
-    let totalCreated = 0;
-    const results = [];
-
     try {
-      // Gerar horários para cada mês futuro
-      for (let i = 1; i <= months; i++) {
+      // 1. Buscar todos os slots existentes do profissional
+      const { data: existingSlots, error: fetchError } = await supabase
+        .from('professional_availability')
+        .select('*')
+        .eq('professional_id', professionalId)
+        .order('date', { ascending: true });
+
+      if (fetchError) {
+        console.error("❌ Erro ao buscar slots existentes:", fetchError);
+        throw new Error("Erro ao buscar slots existentes");
+      }
+
+      if (!existingSlots || existingSlots.length === 0) {
+        console.log("⚠️ Nenhum slot encontrado para replicar");
+        return {
+          status: "warning",
+          message: "Nenhum horário encontrado para replicar. Configure primeiro alguns horários.",
+          slots_created: 0
+        };
+      }
+
+      console.log(`📋 Encontrados ${existingSlots.length} slots para replicar`);
+
+      // 2. Agrupar slots por dia da semana
+      const slotsByDayOfWeek = new Map();
+      existingSlots.forEach(slot => {
+        const dayOfWeek = slot.day_of_week;
+        if (dayOfWeek !== null && dayOfWeek !== undefined) {
+          if (!slotsByDayOfWeek.has(dayOfWeek)) {
+            slotsByDayOfWeek.set(dayOfWeek, []);
+          }
+          slotsByDayOfWeek.get(dayOfWeek).push(slot);
+        }
+      });
+
+      console.log(`📅 Slots agrupados por dia da semana:`, Array.from(slotsByDayOfWeek.keys()));
+
+      // 3. Gerar slots para os próximos meses
+      const currentDate = new Date();
+      const slotsToInsert = [];
+
+      for (let monthOffset = 1; monthOffset <= months; monthOffset++) {
         const targetDate = new Date(currentDate);
-        targetDate.setMonth(currentDate.getMonth() + i);
+        targetDate.setMonth(currentDate.getMonth() + monthOffset);
 
-        const targetMonth = targetDate.getMonth() + 1; // getMonth() retorna 0-11, precisamos 1-12
         const targetYear = targetDate.getFullYear();
+        const targetMonth = targetDate.getMonth(); // 0-11
 
-        console.log(`📅 Gerando horários para mês ${i}/${months}: ${targetMonth}/${targetYear}`);
+        console.log(`📅 Processando mês ${monthOffset}/${months}: ${targetMonth + 1}/${targetYear}`);
 
-        try {
-          const result = await this.updateMonthlyAvailability(professionalId, targetMonth, targetYear);
-          results.push({
-            month: targetMonth,
-            year: targetYear,
-            created: result.created || 0
-          });
-          totalCreated += result.created || 0;
+        // Para cada dia da semana que tem slots
+        for (const [dayOfWeek, daySlots] of slotsByDayOfWeek) {
+          // Encontrar todas as datas deste dia da semana no mês alvo
+          const datesInMonth = this.getMonthDatesForDayOfWeek(targetYear, targetMonth, dayOfWeek);
 
-          console.log(`✅ Mês ${targetMonth}/${targetYear}: ${result.created || 0} horários criados`);
-        } catch (monthError) {
-          console.error(`❌ Erro ao gerar horários para ${targetMonth}/${targetYear}:`, monthError);
-          results.push({
-            month: targetMonth,
-            year: targetYear,
-            created: 0,
-            error: monthError.message
-          });
+          console.log(`📅 Dia da semana ${dayOfWeek}: ${datesInMonth.length} datas encontradas`);
+
+          // Para cada data, criar todos os slots deste dia da semana
+          for (const date of datesInMonth) {
+            const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
+
+            for (const originalSlot of daySlots) {
+              slotsToInsert.push({
+                professional_id: professionalId,
+                date: dateString,
+                start_time: originalSlot.start_time,
+                end_time: originalSlot.end_time,
+                is_active: originalSlot.is_active,
+                day_of_week: dayOfWeek,
+                service_id: originalSlot.service_id,
+                custom_price: originalSlot.custom_price,
+                custom_duration: originalSlot.custom_duration
+              });
+            }
+          }
         }
       }
 
+      console.log(`📊 Total de slots a serem inseridos: ${slotsToInsert.length}`);
+
+      // 4. Verificar duplicatas e inserir apenas slots únicos
+      const uniqueSlots = [];
+      for (const slot of slotsToInsert) {
+        // Verificar se já existe um slot para esta data/hora/profissional
+        const { data: existing } = await supabase
+          .from('professional_availability')
+          .select('id')
+          .eq('professional_id', slot.professional_id)
+          .eq('date', slot.date)
+          .eq('start_time', slot.start_time)
+          .eq('end_time', slot.end_time)
+          .single();
+
+        if (!existing) {
+          uniqueSlots.push(slot);
+        }
+      }
+
+      console.log(`📊 Slots únicos a serem inseridos: ${uniqueSlots.length}`);
+
+      // 5. Inserir slots em lote
+      let insertedCount = 0;
+      if (uniqueSlots.length > 0) {
+        const { data: insertedSlots, error: insertError } = await supabase
+          .from('professional_availability')
+          .insert(uniqueSlots)
+          .select('id');
+
+        if (insertError) {
+          console.error("❌ Erro ao inserir slots:", insertError);
+          throw new Error("Erro ao inserir novos horários");
+        }
+
+        insertedCount = insertedSlots?.length || 0;
+      }
+
       const response = {
-        totalCreated,
-        months,
-        results,
-        message: `${totalCreated} horários criados para ${months} mês(es) futuros`
+        status: "success",
+        message: "Horários gerados com sucesso",
+        slots_created: insertedCount,
+        totalCreated: insertedCount,
+        months: months,
+        duplicates_skipped: slotsToInsert.length - uniqueSlots.length
       };
 
       console.log("🎉 generateFutureAvailability concluído:", response);
