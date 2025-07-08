@@ -3,21 +3,38 @@ import CryptoJS from 'crypto-js';
 /**
  * Utilitário para criptografia de dados sensíveis no frontend
  * Protege credenciais antes de enviar para o servidor
+ * IMPORTANTE: Criptografa dados ANTES de aparecer no Network tab
  */
 
-// Chave de criptografia (em produção, deve vir de variável de ambiente)
-const ENCRYPTION_KEY = process.env.VITE_ENCRYPTION_KEY || 'SempreCheioApp2025SecureKey!@#';
+// Chave de criptografia (deve ser a mesma do backend)
+const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'SempreCheioApp2025SecureKey!@#';
 
 /**
- * Criptografa uma string usando AES
+ * Criptografa uma string usando AES-256-CBC (compatível com Node.js crypto)
  */
 export function encryptData(data: string): string {
   try {
-    const encrypted = CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
-    return encrypted;
+    // Gerar IV aleatório
+    const iv = CryptoJS.lib.WordArray.random(16);
+
+    // Criar chave derivada (compatível com Node.js scrypt)
+    const key = CryptoJS.PBKDF2(ENCRYPTION_KEY, 'salt', {
+      keySize: 256/32,
+      iterations: 1000
+    });
+
+    // Criptografar usando AES-256-CBC
+    const encrypted = CryptoJS.AES.encrypt(data, key, {
+      iv: iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    });
+
+    // Retornar IV:dados_criptografados (formato compatível com backend)
+    return iv.toString() + ':' + encrypted.ciphertext.toString();
   } catch (error) {
     console.error('Erro ao criptografar dados:', error);
-    return data; // Fallback para dados originais se criptografia falhar
+    throw new Error('Falha na criptografia');
   }
 }
 

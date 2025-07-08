@@ -12,6 +12,7 @@ import { sanitizeUserData, applySanitization } from "./utils/dataSanitizer";
 import { authSanitizationMiddleware, publicApiSanitizationMiddleware } from "./middleware/sanitization";
 import { setAuthCookies, clearAuthCookies, authenticateJWT, requireSuperAdmin, requireAnyAdmin } from "./utils/jwt";
 import { applyAuthSecurity, applySecurity, apiRateLimit } from "./middleware/security";
+import { decryptLoginMiddleware, sanitizeLoginLogs } from "./utils/encryption";
 import { asaasService } from "./asaas-service";
 
 interface AuthRequest extends Request {
@@ -73,6 +74,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply API rate limiting
   app.use('/api', apiRateLimit);
+
+  // Apply encryption middleware for login routes
+  app.use(decryptLoginMiddleware);
+  app.use(sanitizeLoginLogs);
 
   // Enable audit logging for all requests
   app.use(auditMiddleware);

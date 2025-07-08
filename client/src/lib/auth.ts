@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "./queryClient";
 import type { User, LoginRequest } from "@shared/schema";
+import { encryptLoginData, clearSensitiveData } from "@/utils/encryption";
 
 export function useAuth() {
   const { data: user, isLoading } = useQuery<User | null>({
@@ -36,15 +37,24 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (loginData: LoginRequest) => {
-      // Fazer requisição segura - cookies JWT serão definidos automaticamente pelo servidor
+      // CRIPTOGRAFAR dados ANTES de enviar (protege Network tab)
+      const encryptedData = encryptLoginData(loginData);
+
+      console.log('🔒 Dados criptografados antes do envio');
+
+      // Fazer requisição com dados criptografados
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include", // IMPORTANTE: incluir cookies para JWT
-        body: JSON.stringify(loginData),
+        body: JSON.stringify(encryptedData), // ← Dados criptografados no Network tab
       });
+
+      // Limpar dados sensíveis da memória
+      clearSensitiveData(loginData);
+      clearSensitiveData(encryptedData);
 
       if (!response.ok) {
         const errorData = await response.json();
