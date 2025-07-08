@@ -8,6 +8,8 @@ import { auditMiddleware, logAudit } from "./middleware/audit";
 import { checkUserLimits, checkAppointmentLimits, getClientUsageStats } from "./middleware/limits";
 import { errorHandler, notFoundHandler, asyncHandler, ApiError } from "./middleware/error-handler";
 import { ClientService } from "./services/client-service";
+import { sanitizeUserData, applySanitization } from "./utils/dataSanitizer";
+import { authSanitizationMiddleware, publicApiSanitizationMiddleware } from "./middleware/sanitization";
 import { asaasService } from "./asaas-service";
 
 interface AuthRequest extends Request {
@@ -78,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
   
   // Login endpoint - Now supports both users and clients
-  app.post("/api/auth/login", async (req: Request, res: Response) => {
+  app.post("/api/auth/login", authSanitizationMiddleware, async (req: Request, res: Response) => {
     try {
       const result = loginSchema.safeParse(req.body);
       
@@ -162,13 +164,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         redirectPath = '/dashboard';
       }
 
+      // Sanitizar dados do usuário antes de enviar
+      const sanitizedUser = sanitizeUserData({
+        ...userWithoutPassword,
+        userType,
+        redirectPath
+      });
+
       res.json({
         message: `Login realizado com sucesso! Bem-vindo, ${userType}.`,
-        user: {
-          ...userWithoutPassword,
-          userType,
-          redirectPath
-        }
+        user: sanitizedUser
       });
       
     } catch (error) {
@@ -196,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get current user
-  app.get("/api/auth/user", requireAuth, async (req: AuthRequest, res: Response) => {
+  app.get("/api/auth/user", requireAuth, authSanitizationMiddleware, async (req: AuthRequest, res: Response) => {
     try {
       const { password: _, ...userWithoutPassword } = req.user;
 
@@ -215,11 +220,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         redirectPath = '/admin';
       }
 
-      res.json({
+      // Sanitizar dados do usuário antes de enviar
+      const sanitizedUser = sanitizeUserData({
         ...userWithoutPassword,
         userType,
         redirectPath
       });
+
+      res.json(sanitizedUser);
     } catch (error) {
       console.error("Get user error:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
@@ -657,19 +665,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const client = await storage.getClientByEmail(req.user.email);
         if (client) {
           const professionals = await storage.listProfessionalsByClient(client.id);
-          return res.json(professionals);
+          const sanitizedProfessionals = professionals.map(prof => applySanitization(prof, 'professional'));
+          return res.json(sanitizedProfessionals);
         }
       }
 
       // Se especificou client_id na query, filtrar por ele
       if (client_id) {
         const professionals = await storage.listProfessionalsByClient(client_id as string);
-        return res.json(professionals);
+        const sanitizedProfessionals = professionals.map(prof => applySanitization(prof, 'professional'));
+        return res.json(sanitizedProfessionals);
       }
 
       // Super admin vê todos os profissionais
       const professionals = await storage.listProfessionals();
-      res.json(professionals);
+      const sanitizedProfessionals = professionals.map(prof => applySanitization(prof, 'professional'));
+      res.json(sanitizedProfessionals);
     } catch (error) {
       console.error("Error fetching professionals:", error);
       res.status(500).json({ message: "Erro ao buscar profissionais" });
@@ -1061,7 +1072,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const appointments = await storage.listAppointments(filters);
       console.log(`DEBUG - Found ${appointments.length} appointments for filters:`, filters);
-      res.json(appointments);
+
+      // Sanitizar dados dos agendamentos antes de enviar
+      const sanitizedAppointments = appointments.map(appointment => applySanitization(appointment, 'appointment'));
+      res.json(sanitizedAppointments);
     } catch (error) {
       console.error("Error fetching appointments:", error);
       res.status(500).json({ message: "Erro ao buscar agendamentos" });
@@ -1315,7 +1329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Agent endpoints
-  app.post("/api/ai-agent/lookup", async (req: Request, res: Response) => {
+  app.post("/api/ai-agent/lookup", publicApiSanitizationMiddleware, async (req: Request, res: Response) => {
     try {
       const { tokenOrInstance } = req.body;
       
@@ -1330,12 +1344,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Cliente não encontrado com esta instância/token" });
       }
 
+      // Sanitizar dados do cliente para AI Agent (remover prompt sensível)
       const result = {
         clientId: client.id,
         clientName: client.name,
         hasExistingPrompt: !!client.promptIa,
-        currentPrompt: client.promptIa || '',
-        agentName: client.agentName || ''
+        // Remover prompt completo por segurança - AI Agent deve buscar internamente
+        agentName: client.agentName || 'Assistente Virtual'
       };
 
       res.json(result);
