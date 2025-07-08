@@ -1,28 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  /* Modern SaaS Color Palette */
   --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --foreground: hsl(222, 84%, 4.9%);
+  --muted: hsl(210, 40%, 98%);
+  --muted-foreground: hsl(215, 13.8%, 34.1%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --popover-foreground: hsl(222, 84%, 4.9%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(221, 83%, 53%);
+  --card-foreground: hsl(222, 84%, 4.9%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+
+  /* Primary Purple Theme */
+  --primary: hsl(252, 100%, 70%); /* #6C63FF */
   --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(60, 4.8%, 95.9%);
-  --secondary-foreground: hsl(24, 9.8%, 10%);
-  --accent: hsl(60, 4.8%, 95.9%);
-  --accent-foreground: hsl(24, 9.8%, 10%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
+  --primary-50: hsl(252, 100%, 97%);
+  --primary-100: hsl(252, 100%, 94%);
+  --primary-500: hsl(252, 100%, 70%);
+  --primary-600: hsl(252, 100%, 65%);
+  --primary-700: hsl(252, 100%, 60%);
+
+  --secondary: hsl(210, 40%, 98%);
+  --secondary-foreground: hsl(222, 84%, 4.9%);
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(222, 84%, 4.9%);
+
+  /* Status Colors */
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --success: hsl(142, 76%, 36%);
+  --success-foreground: hsl(210, 40%, 98%);
+  --warning: hsl(38, 92%, 50%);
+  --warning-foreground: hsl(222, 84%, 4.9%);
+
+  --ring: hsl(252, 100%, 70%);
+  --radius: 0.75rem;
 }
 
 .dark {
@@ -117,49 +135,153 @@
   }
 }
 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-inter;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Modern Card Component */
+  .card-modern {
+    @apply bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  /* Modern Button Variants */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2.5 font-medium transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border rounded-lg px-4 py-2.5 font-medium transition-all duration-200;
+  }
+
+  /* Modern Input */
+  .input-modern {
+    @apply bg-background border border-border rounded-lg px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200;
+  }
+
+  /* Status Badges */
+  .badge-success {
+    @apply bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .badge-error {
+    @apply bg-red-50 text-red-700 border border-red-200 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+}
+
 @layer utilities {
-  /* Responsive utilities */
-  .container-responsive {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
+  /* Modern Container System */
+  .container-modern {
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 1280px;
   }
 
-  @media (min-width: 640px) {
-    .container-responsive {
-      max-width: 640px;
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
+  .container-narrow {
+    @apply w-full mx-auto px-4 sm:px-6;
+    max-width: 768px;
   }
 
-  @media (min-width: 768px) {
-    .container-responsive {
-      max-width: 768px;
-      padding-left: 2rem;
-      padding-right: 2rem;
-    }
+  .container-wide {
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12;
+    max-width: 1536px;
   }
 
-  @media (min-width: 1024px) {
-    .container-responsive {
-      max-width: 1024px;
-    }
+  /* Modern Grid System */
+  .grid-modern {
+    @apply grid gap-4 sm:gap-6;
   }
 
-  @media (min-width: 1280px) {
-    .container-responsive {
-      max-width: 1280px;
-    }
+  .grid-cols-responsive {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
   }
 
-  @media (min-width: 1536px) {
-    .container-responsive {
-      max-width: 1536px;
-    }
+  .grid-cols-cards {
+    @apply grid-cols-1 md:grid-cols-2 xl:grid-cols-3;
   }
+
+  /* Modern Spacing */
+  .space-modern {
+    @apply space-y-4 sm:space-y-6;
+  }
+
+  .space-section {
+    @apply space-y-6 sm:space-y-8 lg:space-y-10;
+  }
+
+  /* Modern Typography */
+  .text-heading-1 {
+    @apply text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight;
+  }
+
+  .text-heading-2 {
+    @apply text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight;
+  }
+
+  .text-heading-3 {
+    @apply text-lg sm:text-xl font-semibold;
+  }
+
+  .text-body {
+    @apply text-sm sm:text-base text-muted-foreground;
+  }
+
+  /* Modern Shadows */
+  .shadow-modern {
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  .shadow-card {
+    @apply shadow-sm border border-border/50;
+  }
+
+  /* Safe Area for Mobile */
+  .safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Modern Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  /* Font Family Utilities */
+  .font-inter {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
   /* Mobile-first grid */
   .grid-responsive {
