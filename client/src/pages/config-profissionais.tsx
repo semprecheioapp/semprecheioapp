@@ -81,6 +81,10 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     slotDuration: 60, // Padrão: 1 hora
   });
 
+  // Estados para geração de horários futuros
+  const [showFutureScheduleModal, setShowFutureScheduleModal] = useState(false);
+  const [futureSchedulePeriod, setFutureSchedulePeriod] = useState<"1" | "3" | "6" | "12">("1");
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -296,6 +300,34 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       toast({
         title: "Erro",
         description: error.message || "Erro ao gerar horários do próximo mês.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation para gerar horários futuros (nova funcionalidade)
+  const generateFutureScheduleMutation = useMutation({
+    mutationFn: async ({ professionalId, months }: { professionalId: string; months: number }) => {
+      const response = await fetch("/api/professional-availability/generate-future", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ professionalId, months }),
+      });
+      if (!response.ok) throw new Error("Erro ao gerar horários futuros");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/professional-availability"] });
+      setShowFutureScheduleModal(false);
+      toast({
+        title: "Sucesso!",
+        description: `${data.totalCreated} horários criados para ${data.months} mês(es) futuros`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao gerar horários futuros.",
         variant: "destructive",
       });
     },
@@ -559,6 +591,38 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     }
   };
 
+  // Função para abrir modal de geração futura
+  const handleOpenFutureScheduleModal = () => {
+    if (!selectedProfessional) {
+      toast({
+        title: "Erro",
+        description: "Selecione um profissional primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (availabilities.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Configure primeiro alguns horários para este profissional antes de replicar para o futuro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setShowFutureScheduleModal(true);
+  };
+
+  // Função para confirmar geração futura
+  const handleConfirmFutureSchedule = () => {
+    const months = parseInt(futureSchedulePeriod);
+    generateFutureScheduleMutation.mutate({
+      professionalId: selectedProfessional,
+      months
+    });
+  };
+
   const getDayName = (dayOfWeek?: number) => {
     if (dayOfWeek === undefined || dayOfWeek === null) return null;
     return DAYS_OF_WEEK.find(day => day.value === dayOfWeek)?.label || "Desconhecido";
@@ -699,6 +763,22 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                 <span>Horários - {selectedProfessionalData?.name}</span>
               </CardTitle>
               <div className="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2">
+                {/* Mostrar botão de gerar horários futuros apenas se já houver horários configurados */}
+                {availabilities.length > 0 && (
+                  <Button
+                    onClick={handleOpenFutureScheduleModal}
+                    variant="outline"
+                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                    disabled={generateFutureScheduleMutation.isPending}
+                  >
+                    {generateFutureScheduleMutation.isPending ? (
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CalendarDays className="w-4 h-4 mr-2" />
+                    )}
+                    Gerar Horários Futuros
+                  </Button>
+                )}
                 <Button
                   onClick={handleGenerateNextMonth}
                   variant="outline"
@@ -817,6 +897,112 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de Geração de Horários Futuros */}
+      <Dialog open={showFutureScheduleModal} onOpenChange={setShowFutureScheduleModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <CalendarDays className="w-5 h-5 text-purple-600" />
+              <span>Gerar Horários Futuros</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Quer replicar esses horários para o futuro?</strong>
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Os horários serão criados com base na configuração atual do profissional.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">📆 Período para replicar:</Label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="period-1"
+                    name="period"
+                    value="1"
+                    checked={futureSchedulePeriod === "1"}
+                    onChange={(e) => setFutureSchedulePeriod(e.target.value as "1" | "3" | "6" | "12")}
+                    className="text-purple-600"
+                  />
+                  <Label htmlFor="period-1" className="text-sm cursor-pointer">Próximo mês</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="period-3"
+                    name="period"
+                    value="3"
+                    checked={futureSchedulePeriod === "3"}
+                    onChange={(e) => setFutureSchedulePeriod(e.target.value as "1" | "3" | "6" | "12")}
+                    className="text-purple-600"
+                  />
+                  <Label htmlFor="period-3" className="text-sm cursor-pointer">Próximos 3 meses</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="period-6"
+                    name="period"
+                    value="6"
+                    checked={futureSchedulePeriod === "6"}
+                    onChange={(e) => setFutureSchedulePeriod(e.target.value as "1" | "3" | "6" | "12")}
+                    className="text-purple-600"
+                  />
+                  <Label htmlFor="period-6" className="text-sm cursor-pointer">Próximos 6 meses</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="period-12"
+                    name="period"
+                    value="12"
+                    checked={futureSchedulePeriod === "12"}
+                    onChange={(e) => setFutureSchedulePeriod(e.target.value as "1" | "3" | "6" | "12")}
+                    className="text-purple-600"
+                  />
+                  <Label htmlFor="period-12" className="text-sm cursor-pointer">Ano completo</Label>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-orange-50 p-3 rounded-lg">
+              <p className="text-xs text-orange-800">
+                ⚠️ <strong>Importante:</strong> Slots duplicados serão automaticamente evitados.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex space-x-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowFutureScheduleModal(false)}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmFutureSchedule}
+              disabled={generateFutureScheduleMutation.isPending}
+              className="flex-1 bg-purple-600 hover:bg-purple-700"
+            >
+              {generateFutureScheduleMutation.isPending ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CalendarDays className="w-4 h-4 mr-2" />
+              )}
+              🔄 Gerar Horários
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Criação/Edição */}
       <Dialog open={showModal} onOpenChange={setShowModal}>

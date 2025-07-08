@@ -1939,6 +1939,62 @@ export class ClientsAuthStorage implements IStorage {
     return this.updateMonthlyAvailability(professionalId, adjustedMonth + 1, nextYear);
   }
 
+  // Método para gerar horários futuros (nova funcionalidade)
+  async generateFutureAvailability(professionalId: string, months: number): Promise<any> {
+    console.log("🔄 Iniciando generateFutureAvailability:", { professionalId, months });
+
+    const currentDate = new Date();
+    let totalCreated = 0;
+    const results = [];
+
+    try {
+      // Gerar horários para cada mês futuro
+      for (let i = 1; i <= months; i++) {
+        const targetDate = new Date(currentDate);
+        targetDate.setMonth(currentDate.getMonth() + i);
+
+        const targetMonth = targetDate.getMonth() + 1; // getMonth() retorna 0-11, precisamos 1-12
+        const targetYear = targetDate.getFullYear();
+
+        console.log(`📅 Gerando horários para mês ${i}/${months}: ${targetMonth}/${targetYear}`);
+
+        try {
+          const result = await this.updateMonthlyAvailability(professionalId, targetMonth, targetYear);
+          results.push({
+            month: targetMonth,
+            year: targetYear,
+            created: result.created || 0
+          });
+          totalCreated += result.created || 0;
+
+          console.log(`✅ Mês ${targetMonth}/${targetYear}: ${result.created || 0} horários criados`);
+        } catch (monthError) {
+          console.error(`❌ Erro ao gerar horários para ${targetMonth}/${targetYear}:`, monthError);
+          results.push({
+            month: targetMonth,
+            year: targetYear,
+            created: 0,
+            error: monthError.message
+          });
+        }
+      }
+
+      const response = {
+        totalCreated,
+        months,
+        results,
+        message: `${totalCreated} horários criados para ${months} mês(es) futuros`
+      };
+
+      console.log("🎉 generateFutureAvailability concluído:", response);
+      return response;
+
+    } catch (error) {
+      console.error("❌ Erro geral em generateFutureAvailability:", error);
+      throw error;
+    }
+  }
+
   // Método auxiliar para obter todas as datas de um dia da semana em um mês
   private getMonthDatesForDayOfWeek(year: number, month: number, dayOfWeek: number): Date[] {
     const dates: Date[] = [];
