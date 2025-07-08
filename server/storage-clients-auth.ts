@@ -1941,10 +1941,11 @@ export class ClientsAuthStorage implements IStorage {
 
   // Método para gerar horários futuros (nova funcionalidade)
   async generateFutureAvailability(professionalId: string, months: number): Promise<any> {
-    console.log("🔄 Iniciando generateFutureAvailability:", { professionalId, months });
+    console.log("🔄 [STORAGE] Iniciando generateFutureAvailability:", { professionalId, months });
 
     try {
       // 1. Buscar todos os slots existentes do profissional
+      console.log("🔍 [STORAGE] Buscando slots existentes...");
       const { data: existingSlots, error: fetchError } = await supabase
         .from('professional_availability')
         .select('*')
@@ -1952,12 +1953,12 @@ export class ClientsAuthStorage implements IStorage {
         .order('date', { ascending: true });
 
       if (fetchError) {
-        console.error("❌ Erro ao buscar slots existentes:", fetchError);
+        console.error("❌ [STORAGE] Erro ao buscar slots existentes:", fetchError);
         throw new Error("Erro ao buscar slots existentes");
       }
 
       if (!existingSlots || existingSlots.length === 0) {
-        console.log("⚠️ Nenhum slot encontrado para replicar");
+        console.log("⚠️ [STORAGE] Nenhum slot encontrado para replicar");
         return {
           status: "warning",
           message: "Nenhum horário encontrado para replicar. Configure primeiro alguns horários.",
@@ -1965,99 +1966,101 @@ export class ClientsAuthStorage implements IStorage {
         };
       }
 
-      console.log(`📋 Encontrados ${existingSlots.length} slots para replicar`);
+      console.log(`📋 [STORAGE] Encontrados ${existingSlots.length} slots para replicar:`, existingSlots.map(s => ({
+        date: s.date,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        is_active: s.is_active,
+        day_of_week: s.day_of_week
+      })));
 
-      // 2. Agrupar slots por dia da semana
-      const slotsByDayOfWeek = new Map();
-      existingSlots.forEach(slot => {
-        const dayOfWeek = slot.day_of_week;
-        if (dayOfWeek !== null && dayOfWeek !== undefined) {
-          if (!slotsByDayOfWeek.has(dayOfWeek)) {
-            slotsByDayOfWeek.set(dayOfWeek, []);
-          }
-          slotsByDayOfWeek.get(dayOfWeek).push(slot);
-        }
-      });
-
-      console.log(`📅 Slots agrupados por dia da semana:`, Array.from(slotsByDayOfWeek.keys()));
-
-      // 3. Gerar slots para os próximos meses
+      // 2. Calcular datas futuras baseadas nos slots existentes
       const currentDate = new Date();
       const slotsToInsert = [];
 
       for (let monthOffset = 1; monthOffset <= months; monthOffset++) {
-        const targetDate = new Date(currentDate);
-        targetDate.setMonth(currentDate.getMonth() + monthOffset);
+        console.log(`📅 [STORAGE] Processando mês ${monthOffset}/${months}`);
 
-        const targetYear = targetDate.getFullYear();
-        const targetMonth = targetDate.getMonth(); // 0-11
+        // Para cada slot existente, calcular a data futura correspondente
+        for (const originalSlot of existingSlots) {
+          const originalDate = new Date(originalSlot.date);
 
-        console.log(`📅 Processando mês ${monthOffset}/${months}: ${targetMonth + 1}/${targetYear}`);
+          // Calcular a nova data (mesmo dia do mês, mas no mês futuro)
+          const newDate = new Date(originalDate);
+          newDate.setMonth(originalDate.getMonth() + monthOffset);
 
-        // Para cada dia da semana que tem slots
-        for (const [dayOfWeek, daySlots] of slotsByDayOfWeek) {
-          // Encontrar todas as datas deste dia da semana no mês alvo
-          const datesInMonth = this.getMonthDatesForDayOfWeek(targetYear, targetMonth, dayOfWeek);
-
-          console.log(`📅 Dia da semana ${dayOfWeek}: ${datesInMonth.length} datas encontradas`);
-
-          // Para cada data, criar todos os slots deste dia da semana
-          for (const date of datesInMonth) {
-            const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
-
-            for (const originalSlot of daySlots) {
-              slotsToInsert.push({
-                professional_id: professionalId,
-                date: dateString,
-                start_time: originalSlot.start_time,
-                end_time: originalSlot.end_time,
-                is_active: originalSlot.is_active,
-                day_of_week: dayOfWeek,
-                service_id: originalSlot.service_id,
-                custom_price: originalSlot.custom_price,
-                custom_duration: originalSlot.custom_duration
-              });
-            }
+          // Se o dia não existe no novo mês (ex: 31 de janeiro -> 28 de fevereiro), ajustar
+          if (newDate.getMonth() !== (originalDate.getMonth() + monthOffset) % 12) {
+            newDate.setDate(0); // Último dia do mês anterior
           }
+
+          const newDateString = newDate.toISOString().split('T')[0];
+
+          console.log(`📅 [STORAGE] Slot original ${originalSlot.date} -> Nova data ${newDateString}`);
+
+          // Criar novo slot com a mesma estrutura
+          slotsToInsert.push({
+            professional_id: professionalId,
+            date: newDateString,
+            start_time: originalSlot.start_time,
+            end_time: originalSlot.end_time,
+            is_active: originalSlot.is_active,
+            day_of_week: originalSlot.day_of_week,
+            service_id: originalSlot.service_id,
+            custom_price: originalSlot.custom_price,
+            custom_duration: originalSlot.custom_duration
+          });
         }
       }
 
-      console.log(`📊 Total de slots a serem inseridos: ${slotsToInsert.length}`);
+      console.log(`📊 [STORAGE] Total de slots a serem inseridos: ${slotsToInsert.length}`);
 
-      // 4. Verificar duplicatas e inserir apenas slots únicos
+      // 3. Verificar duplicatas e inserir apenas slots únicos
       const uniqueSlots = [];
       for (const slot of slotsToInsert) {
+        console.log(`🔍 [STORAGE] Verificando duplicata para ${slot.date} ${slot.start_time}-${slot.end_time}`);
+
         // Verificar se já existe um slot para esta data/hora/profissional
-        const { data: existing } = await supabase
+        const { data: existing, error: checkError } = await supabase
           .from('professional_availability')
           .select('id')
           .eq('professional_id', slot.professional_id)
           .eq('date', slot.date)
           .eq('start_time', slot.start_time)
           .eq('end_time', slot.end_time)
-          .single();
+          .maybeSingle();
+
+        if (checkError) {
+          console.error("❌ [STORAGE] Erro ao verificar duplicata:", checkError);
+          continue;
+        }
 
         if (!existing) {
           uniqueSlots.push(slot);
+          console.log(`✅ [STORAGE] Slot único: ${slot.date} ${slot.start_time}-${slot.end_time}`);
+        } else {
+          console.log(`⚠️ [STORAGE] Slot duplicado ignorado: ${slot.date} ${slot.start_time}-${slot.end_time}`);
         }
       }
 
-      console.log(`📊 Slots únicos a serem inseridos: ${uniqueSlots.length}`);
+      console.log(`📊 [STORAGE] Slots únicos a serem inseridos: ${uniqueSlots.length}`);
 
-      // 5. Inserir slots em lote
+      // 4. Inserir slots em lote
       let insertedCount = 0;
       if (uniqueSlots.length > 0) {
+        console.log("💾 [STORAGE] Inserindo slots no banco...");
         const { data: insertedSlots, error: insertError } = await supabase
           .from('professional_availability')
           .insert(uniqueSlots)
           .select('id');
 
         if (insertError) {
-          console.error("❌ Erro ao inserir slots:", insertError);
-          throw new Error("Erro ao inserir novos horários");
+          console.error("❌ [STORAGE] Erro ao inserir slots:", insertError);
+          throw new Error("Erro ao inserir novos horários: " + insertError.message);
         }
 
         insertedCount = insertedSlots?.length || 0;
+        console.log(`✅ [STORAGE] ${insertedCount} slots inseridos com sucesso`);
       }
 
       const response = {
@@ -2069,11 +2072,12 @@ export class ClientsAuthStorage implements IStorage {
         duplicates_skipped: slotsToInsert.length - uniqueSlots.length
       };
 
-      console.log("🎉 generateFutureAvailability concluído:", response);
+      console.log("🎉 [STORAGE] generateFutureAvailability concluído:", response);
       return response;
 
     } catch (error) {
-      console.error("❌ Erro geral em generateFutureAvailability:", error);
+      console.error("❌ [STORAGE] Erro geral em generateFutureAvailability:", error);
+      console.error("❌ [STORAGE] Stack trace:", error.stack);
       throw error;
     }
   }

@@ -863,21 +863,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { professionalId, months } = req.body;
 
-      console.log("🔄 Iniciando geração de horários futuros:", { professionalId, months });
+      console.log("🔄 [ROTA] Iniciando geração de horários futuros:", { professionalId, months, body: req.body });
 
       if (!professionalId || !months || months < 1 || months > 12) {
+        console.log("❌ [ROTA] Parâmetros inválidos:", { professionalId, months });
         return res.status(400).json({
           message: "professionalId e months (1-12) são obrigatórios"
         });
       }
 
+      console.log("🔄 [ROTA] Chamando storage.generateFutureAvailability...");
+
+      // Verificar se a função existe
+      if (typeof storage.generateFutureAvailability !== 'function') {
+        console.error("❌ [ROTA] Função generateFutureAvailability não encontrada no storage");
+        return res.status(500).json({ message: "Função não implementada" });
+      }
+
       const result = await storage.generateFutureAvailability(professionalId, months);
 
-      console.log("✅ Horários futuros gerados com sucesso:", result);
+      console.log("✅ [ROTA] Horários futuros gerados com sucesso:", result);
       res.json(result);
     } catch (error) {
-      console.error("❌ Erro ao gerar horários futuros:", error);
-      res.status(500).json({ message: "Erro ao gerar horários futuros" });
+      console.error("❌ [ROTA] Erro ao gerar horários futuros:", error);
+      console.error("❌ [ROTA] Stack trace:", error.stack);
+      res.status(500).json({ message: "Erro ao gerar horários futuros", error: error.message });
     }
   });
 
