@@ -602,15 +602,6 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
       return;
     }
 
-    if (availabilities.length === 0) {
-      toast({
-        title: "Aviso",
-        description: "Configure primeiro alguns horários para este profissional antes de replicar para o futuro.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setShowFutureScheduleModal(true);
   };
 
@@ -763,22 +754,23 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                 <span>Horários - {selectedProfessionalData?.name}</span>
               </CardTitle>
               <div className="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2">
-                {/* Mostrar botão de gerar horários futuros apenas se já houver horários configurados */}
-                {availabilities.length > 0 && (
-                  <Button
-                    onClick={handleOpenFutureScheduleModal}
-                    variant="outline"
-                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
-                    disabled={generateFutureScheduleMutation.isPending}
-                  >
-                    {generateFutureScheduleMutation.isPending ? (
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <CalendarDays className="w-4 h-4 mr-2" />
-                    )}
-                    Gerar Horários Futuros
-                  </Button>
-                )}
+                {console.log("🔍 RENDERIZANDO BOTÕES - selectedProfessional:", selectedProfessional)}
+
+                {/* Botão Gerar Horários Futuros */}
+                <Button
+                  onClick={handleOpenFutureScheduleModal}
+                  variant="outline"
+                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                  disabled={generateFutureScheduleMutation.isPending}
+                >
+                  {generateFutureScheduleMutation.isPending ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                  )}
+                  Gerar Horários Futuros
+                </Button>
+
                 <Button
                   onClick={handleGenerateNextMonth}
                   variant="outline"
