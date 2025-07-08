@@ -36,7 +36,21 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (loginData: LoginRequest) => {
-      const response = await apiRequest("/api/auth/login", "POST", loginData);
+      // Fazer requisição segura - cookies JWT serão definidos automaticamente pelo servidor
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // IMPORTANTE: incluir cookies para JWT
+        body: JSON.stringify(loginData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro no login");
+      }
+
       return response.json();
     },
     onSuccess: (data) => {
@@ -51,7 +65,20 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      await apiRequest("/api/auth/logout", "POST");
+      // Fazer logout seguro - cookies JWT serão limpos pelo servidor
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Incluir cookies para autenticação
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro no logout");
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       // Limpar dados do usuário

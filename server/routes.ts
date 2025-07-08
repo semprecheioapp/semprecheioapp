@@ -10,6 +10,8 @@ import { errorHandler, notFoundHandler, asyncHandler, ApiError } from "./middlew
 import { ClientService } from "./services/client-service";
 import { sanitizeUserData, applySanitization } from "./utils/dataSanitizer";
 import { authSanitizationMiddleware, publicApiSanitizationMiddleware } from "./middleware/sanitization";
+import { setAuthCookies, clearAuthCookies, authenticateJWT, requireSuperAdmin, requireAnyAdmin } from "./utils/jwt";
+import { applyAuthSecurity, applySecurity, apiRateLimit } from "./middleware/security";
 import { asaasService } from "./asaas-service";
 
 interface AuthRequest extends Request {
@@ -66,6 +68,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enable cookie parsing
   app.use(cookieParser());
 
+  // Apply security middleware globally
+  app.use(applySecurity());
+
+  // Apply API rate limiting
+  app.use('/api', apiRateLimit);
+
   // Enable audit logging for all requests
   app.use(auditMiddleware);
   
@@ -80,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
   
   // Login endpoint - Now supports both users and clients
-  app.post("/api/auth/login", authSanitizationMiddleware, async (req: Request, res: Response) => {
+  app.post("/api/auth/login", applyAuthSecurity(), async (req: Request, res: Response) => {
     try {
       const result = loginSchema.safeParse(req.body);
       
@@ -164,14 +172,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         redirectPath = '/dashboard';
       }
 
-      // Sanitizar dados do usuário antes de enviar
-      const sanitizedUser = sanitizeUserData({
+      // Configurar cookies JWT seguros
+      setAuthCookies(res, {
         ...userWithoutPassword,
         userType,
         redirectPath
       });
 
+      // Sanitizar dados do usuário antes de enviar (sem dados sensíveis)
+      const sanitizedUser = sanitizeUserData({
+        id: userWithoutPassword.id,
+        name: userWithoutPassword.name,
+        userType,
+        redirectPath,
+        isActive: userWithoutPassword.isActive
+      });
+
+      // IMPORTANTE: Não retornar token no JSON - apenas status de sucesso
       res.json({
+        status: 'success',
         message: `Login realizado com sucesso! Bem-vindo, ${userType}.`,
         user: sanitizedUser
       });
@@ -201,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get current user
-  app.get("/api/auth/user", requireAuth, authSanitizationMiddleware, async (req: AuthRequest, res: Response) => {
+  app.get("/api/auth/user", authenticateJWT, async (req: AuthRequest, res: Response) => {
     try {
       const { password: _, ...userWithoutPassword } = req.user;
 
@@ -230,6 +249,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(sanitizedUser);
     } catch (error) {
       console.error("Get user error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Logout endpoint - Clear secure cookies
+  app.post("/api/auth/logout", authenticateJWT, async (req: AuthRequest, res: Response) => {
+    try {
+      // Limpar cookies de autenticação
+      clearAuthCookies(res);
+
+      res.json({
+        status: 'success',
+        message: 'Logout realizado com sucesso'
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
