@@ -744,6 +744,21 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
         </CardContent>
       </Card>
 
+      {/* TESTE BOTÃO FORA DA CONDIÇÃO */}
+      <Card>
+        <CardHeader>
+          <CardTitle>TESTE - Botão Fora da Condição</CardTitle>
+          <Button
+            onClick={() => alert("BOTÃO FUNCIONANDO!")}
+            variant="outline"
+            className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+          >
+            <CalendarDays className="w-4 h-4 mr-2" />
+            TESTE - Gerar Horários Futuros
+          </Button>
+        </CardHeader>
+      </Card>
+
       {/* Horários do Profissional */}
       {selectedProfessional && (
         <Card>
