@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Clock, Plus, Edit, Trash2, Calendar, User, Save, X, Building2 } from 'lucide-react';
+import { Clock, Plus, Edit, Trash2, Calendar, User, Save, X, Building2, RefreshCw, CalendarDays } from 'lucide-react';
 
 interface Professional {
   id: string;
@@ -497,14 +497,34 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
           {/* Horários do Profissional */}
           {selectedProfessional && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between space-y-2 xs:space-y-0">
                 <h3 className="text-lg font-medium">
                   Horários - {selectedProfessionalData?.name}
                 </h3>
-                <Button onClick={openNewModal} className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Horário
-                </Button>
+                <div className="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2">
+                  <Button
+                    onClick={() => alert("Gerar Horários Futuros - Em desenvolvimento")}
+                    variant="outline"
+                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                  >
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    Gerar Horários Futuros
+                  </Button>
+
+                  <Button
+                    onClick={() => alert("Gerar Próximo Mês - Em desenvolvimento")}
+                    variant="outline"
+                    className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                  >
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    Gerar Próximo Mês
+                  </Button>
+
+                  <Button onClick={openNewModal} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Horário
+                  </Button>
+                </div>
               </div>
 
               {availabilitiesLoading ? (

@@ -744,21 +744,6 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
         </CardContent>
       </Card>
 
-      {/* TESTE BOTÃO FORA DA CONDIÇÃO */}
-      <Card>
-        <CardHeader>
-          <CardTitle>TESTE - Botão Fora da Condição</CardTitle>
-          <Button
-            onClick={() => alert("BOTÃO FUNCIONANDO!")}
-            variant="outline"
-            className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
-          >
-            <CalendarDays className="w-4 h-4 mr-2" />
-            TESTE - Gerar Horários Futuros
-          </Button>
-        </CardHeader>
-      </Card>
-
       {/* Horários do Profissional */}
       {selectedProfessional && (
         <Card>
@@ -770,11 +755,16 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
               </CardTitle>
               <div className="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2">
                 <Button
-                  onClick={() => alert("Teste botão futuro")}
+                  onClick={handleOpenFutureScheduleModal}
                   variant="outline"
                   className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                  disabled={generateFutureScheduleMutation.isPending}
                 >
-                  <CalendarDays className="w-4 h-4 mr-2" />
+                  {generateFutureScheduleMutation.isPending ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                  )}
                   Gerar Horários Futuros
                 </Button>
 
@@ -791,6 +781,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                   )}
                   Gerar Próximo Mês
                 </Button>
+
                 <Button onClick={openNewModal} className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="w-4 h-4 mr-2" />
                   Novo Horário
