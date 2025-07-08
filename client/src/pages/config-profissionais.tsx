@@ -413,7 +413,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
     };
 
     if (editingAvailability) {
-      // Para edição, manter comportamento atual (um registro só)
+      // Para edição, atualizar apenas o slot específico
       const submitData = cleanDataForBackend({
         ...baseData,
         startTime: formData.startTime,
@@ -426,22 +426,26 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
         data: submitData,
       });
     } else {
-      // Para criação, criar múltiplos slots considerando múltiplos dias
+      // Para criação, criar múltiplos slots individuais
       const daysToCreate = formData.daysOfWeek && formData.daysOfWeek.length > 0
         ? formData.daysOfWeek
         : (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
 
       const slotsToCreate = [];
 
-      // Para cada dia selecionado, criar todos os slots de tempo
+      // Para cada dia selecionado, criar todos os slots de tempo como linhas individuais
       daysToCreate.forEach(dayOfWeek => {
         timeSlots.forEach(slot => {
           const slotData = cleanDataForBackend({
-            ...baseData,
-            dayOfWeek: dayOfWeek,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            isActive: slot.isActive, // Usar o isActive calculado do slot
+            professionalId: formData.professionalId,
+            dayOfWeek: scheduleType === "recurring" ? dayOfWeek : undefined,
+            date: scheduleType === "specific" ? formData.date : undefined,
+            startTime: slot.startTime, // Hora inicial do slot individual
+            endTime: slot.endTime,     // Hora final do slot individual
+            isActive: slot.isActive,   // true ou false baseado no intervalo
+            serviceId: formData.serviceId,
+            customPrice: formData.customPrice,
+            customDuration: formData.slotDuration,
           });
           slotsToCreate.push(slotData);
         });

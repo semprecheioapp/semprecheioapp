@@ -341,32 +341,72 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
         data: dataToSubmit,
       });
     } else {
-      // Lógica para múltiplos dias
-      if (scheduleType === "recurring" && formData.daysOfWeek && formData.daysOfWeek.length > 1) {
-        // Criar horários para múltiplos dias
-        const promises = formData.daysOfWeek.map(dayOfWeek =>
-          createAvailabilityMutation.mutateAsync({
-            ...dataToSubmit,
-            dayOfWeek,
-            date: undefined,
-          })
-        );
+      // Gerar slots individuais baseado no intervalo
+      const timeSlots = generateTimeSlots(
+        formData.startTime,
+        formData.endTime,
+        formData.slotDuration,
+        formData.breakStartTime,
+        formData.breakEndTime
+      );
 
-        Promise.all(promises).then(() => {
-          toast({
-            title: "Sucesso!",
-            description: `${formData.daysOfWeek!.length} horários criados para os dias selecionados.`,
+      const daysToCreate = formData.daysOfWeek && formData.daysOfWeek.length > 0
+        ? formData.daysOfWeek
+        : (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+
+      const slotsToCreate = [];
+
+      // Para cada dia selecionado, criar todos os slots de tempo como linhas individuais
+      daysToCreate.forEach(dayOfWeek => {
+        timeSlots.forEach(slot => {
+          const slotData = cleanDataForBackend({
+            professionalId: formData.professionalId,
+            dayOfWeek: scheduleType === "recurring" ? dayOfWeek : undefined,
+            date: scheduleType === "specific" ? formData.date : undefined,
+            startTime: slot.startTime, // Hora inicial do slot individual
+            endTime: slot.endTime,     // Hora final do slot individual
+            isActive: slot.isActive,   // true ou false baseado no intervalo
+            serviceId: formData.serviceId,
           });
-        }).catch(() => {
-          toast({
-            title: "Erro",
-            description: "Erro ao criar alguns horários.",
-            variant: "destructive",
-          });
+          slotsToCreate.push(slotData);
         });
-      } else {
-        createAvailabilityMutation.mutate(dataToSubmit);
-      }
+      });
+
+      // Criar todos os slots individuais
+      Promise.all(
+        slotsToCreate.map(slotData =>
+          fetch("/api/professional-availability", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: 'include',
+            body: JSON.stringify(slotData),
+          })
+        )
+      ).then(responses => {
+        const failedRequests = responses.filter(r => !r.ok);
+        if (failedRequests.length > 0) {
+          throw new Error(`${failedRequests.length} slots falharam ao ser criados`);
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["/api/professional-availability"] });
+        setShowModal(false);
+        resetForm();
+
+        const totalSlots = slotsToCreate.length;
+        const activeSlots = slotsToCreate.filter(slot => slot.isActive).length;
+        const inactiveSlots = totalSlots - activeSlots;
+
+        toast({
+          title: "Sucesso!",
+          description: `${totalSlots} slots criados (${activeSlots} ativos${inactiveSlots > 0 ? `, ${inactiveSlots} inativos no intervalo` : ''}).`,
+        });
+      }).catch(error => {
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao criar slots de horário.",
+          variant: "destructive",
+        });
+      });
     }
   };
 
