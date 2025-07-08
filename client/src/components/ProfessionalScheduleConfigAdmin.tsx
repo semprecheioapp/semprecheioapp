@@ -405,8 +405,9 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
           };
 
           // Limpar campos undefined
+          console.log("🔍 Admin - Slot ANTES da limpeza:", slotData);
           const cleanSlotData = cleanDataForBackend(slotData);
-          console.log("🔍 Admin - Slot a ser criado:", cleanSlotData);
+          console.log("🔍 Admin - Slot DEPOIS da limpeza:", cleanSlotData);
           slotsToCreate.push(cleanSlotData);
         });
       });

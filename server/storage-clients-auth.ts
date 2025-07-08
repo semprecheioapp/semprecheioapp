@@ -1775,7 +1775,7 @@ export class ClientsAuthStorage implements IStorage {
         day_of_week: availability.dayOfWeek !== undefined ? availability.dayOfWeek : null,
         service_id: availability.serviceId || null,
         specialty_id: availability.specialtyId || null,
-        custom_duration: (availability as any).slotDuration || (availability as any).customDuration || null,
+        custom_duration: (availability as any).customDuration || (availability as any).slotDuration || null,
       };
 
       console.log("🔍 DEBUG - Dados que serão inseridos no banco:", insertData);
@@ -1787,8 +1787,9 @@ export class ClientsAuthStorage implements IStorage {
         .single();
 
       if (error || !data) {
-        console.error('Error creating professional availability:', error);
-        throw new Error('Failed to create professional availability');
+        console.error('🔍 DEBUG - Erro detalhado do Supabase:', error);
+        console.error('🔍 DEBUG - Dados que causaram erro:', insertData);
+        throw new Error(`Failed to create professional availability: ${error?.message || 'Unknown error'}`);
       }
 
       return this.mapProfessionalAvailabilityFromSupabase(data);
