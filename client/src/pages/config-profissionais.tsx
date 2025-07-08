@@ -754,20 +754,12 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                 <span>Horários - {selectedProfessionalData?.name}</span>
               </CardTitle>
               <div className="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2">
-                {console.log("🔍 RENDERIZANDO BOTÕES - selectedProfessional:", selectedProfessional)}
-
-                {/* Botão Gerar Horários Futuros */}
                 <Button
-                  onClick={handleOpenFutureScheduleModal}
+                  onClick={() => alert("Teste botão futuro")}
                   variant="outline"
                   className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
-                  disabled={generateFutureScheduleMutation.isPending}
                 >
-                  {generateFutureScheduleMutation.isPending ? (
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CalendarDays className="w-4 h-4 mr-2" />
-                  )}
+                  <CalendarDays className="w-4 h-4 mr-2" />
                   Gerar Horários Futuros
                 </Button>
 
