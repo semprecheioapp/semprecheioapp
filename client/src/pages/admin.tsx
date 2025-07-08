@@ -306,8 +306,8 @@ const AdminEmpresa: React.FC = () => {
 
   // Componente Sidebar reutilizável
   const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
-    <div className="flex flex-col h-full max-h-screen">
-      <div className="p-4 flex-1 overflow-y-auto min-h-0">
+    <div className="h-full overflow-y-auto">
+      <div className="p-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">
             {currentClient.name}
@@ -388,27 +388,25 @@ const AdminEmpresa: React.FC = () => {
         ))}
       </div>
 
-      {/* Footer da sidebar */}
-      <div className="p-4 border-t border-gray-300 flex-shrink-0 bg-gray-100 dark:bg-gray-800">
-        <div className="text-xs text-gray-500 mb-3">
-          <p className="font-medium">{user.name}</p>
-          <p>{user.email}</p>
-          <Badge variant="secondary" className="mt-2 bg-blue-100 text-blue-800">
-            {currentClient.serviceType}
-          </Badge>
-        </div>
+        {/* Seção de Logout no final da navegação */}
+        <div className="mt-6 pt-4 border-t border-gray-300">
+          <div className="text-xs text-gray-500 mb-4 px-3">
+            <p className="font-medium">{user.name}</p>
+            <p className="truncate">{user.email}</p>
+            <Badge variant="secondary" className="mt-2 bg-blue-100 text-blue-800">
+              {currentClient.serviceType}
+            </Badge>
+          </div>
 
-        {/* Botão de Sair Visível */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleLogout}
-          className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 min-h-[48px]"
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Sair
-        </Button>
-      </div>
+          {/* Botão de Sair como item de navegação */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sair da Conta</span>
+          </button>
+        </div>
     </div>
   );
 
