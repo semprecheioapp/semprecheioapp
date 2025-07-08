@@ -182,9 +182,9 @@ export function ResponsiveLayout({ children, title = "SempreCheioApp", currentPa
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={toggleMobileMenu}>
-            <div className="fixed inset-y-0 left-0 w-72 sm:w-80 bg-white dark:bg-gray-800 shadow-xl sidebar-mobile open safe-area-inset" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-y-0 left-0 w-72 sm:w-80 bg-white dark:bg-gray-800 shadow-xl sidebar-mobile open safe-area-inset flex flex-col max-h-screen" onClick={(e) => e.stopPropagation()}>
               {/* Mobile Logo */}
-              <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-white" />
@@ -196,7 +196,7 @@ export function ResponsiveLayout({ children, title = "SempreCheioApp", currentPa
               </div>
 
               {/* Mobile Navigation */}
-              <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+              <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto min-h-0">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = currentPage === item.id;
@@ -220,11 +220,11 @@ export function ResponsiveLayout({ children, title = "SempreCheioApp", currentPa
               </nav>
 
               {/* Mobile Footer */}
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 bg-white dark:bg-gray-800">
                 <Button
                   variant="ghost"
                   onClick={handleLogout}
-                  className="w-full justify-start text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="w-full justify-start text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 min-h-[48px]"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sair

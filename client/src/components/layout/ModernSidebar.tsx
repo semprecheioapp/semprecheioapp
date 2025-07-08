@@ -59,9 +59,9 @@ export function ModernSidebar({
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full max-h-screen">
       {/* Logo */}
-      <div className="flex items-center justify-center h-16 px-4 border-b border-border bg-card">
+      <div className="flex items-center justify-center h-16 px-4 border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center space-x-3">
           {logo.icon || (
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-600 rounded-xl flex items-center justify-center shadow-sm">
@@ -75,7 +75,7 @@ export function ModernSidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
+      <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto min-h-0">
         {sections.map((section) => {
           const isExpanded = expandedSections.includes(section.section);
           
@@ -139,7 +139,7 @@ export function ModernSidebar({
       </nav>
 
       {/* User Info & Logout */}
-      <div className="border-t border-border p-4 space-y-3">
+      <div className="border-t border-border p-4 space-y-3 flex-shrink-0 bg-background">
         {userInfo && (
           <div className="px-3 py-2 bg-accent rounded-lg">
             <p className="text-sm font-medium text-foreground truncate">
@@ -155,12 +155,12 @@ export function ModernSidebar({
             )}
           </div>
         )}
-        
+
         {onLogout && (
           <Button
             variant="ghost"
             onClick={onLogout}
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-muted-foreground hover:text-foreground min-h-[48px]"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Sair
@@ -196,15 +196,15 @@ export function ModernSidebar({
       {isMobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setIsMobileOpen(false)}
           />
-          
+
           {/* Sidebar */}
-          <div className="relative flex flex-col w-64 bg-background border-r border-border animate-slide-up">
+          <div className="relative flex flex-col w-64 max-h-screen bg-background border-r border-border animate-slide-up overflow-hidden">
             {/* Close Button */}
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 right-4 z-10">
               <Button
                 variant="ghost"
                 size="sm"
@@ -213,7 +213,7 @@ export function ModernSidebar({
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            
+
             <SidebarContent />
           </div>
         </div>
