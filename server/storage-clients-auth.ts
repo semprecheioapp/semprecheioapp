@@ -1775,7 +1775,7 @@ export class ClientsAuthStorage implements IStorage {
         day_of_week: availability.dayOfWeek !== undefined ? availability.dayOfWeek : null,
         service_id: availability.serviceId || null,
         specialty_id: availability.specialtyId || null,
-        custom_duration: (availability as any).customDuration || (availability as any).slotDuration || null,
+        custom_duration: (availability as any).custom_duration || null,
       };
 
       console.log("🔍 DEBUG - Dados que serão inseridos no banco:", insertData);

@@ -106,11 +106,13 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
 
   // Função para limpar campos que não devem ir para o backend
   const cleanDataForBackend = (data: any) => {
-    const { breakStartTime, breakEndTime, daysOfWeek, slotDuration, ...cleanData } = data;
+    const { breakStartTime, breakEndTime, daysOfWeek, slotDuration, customDuration, ...cleanData } = data;
 
-    // Converter slotDuration para customDuration se existir
+    // Converter slotDuration para custom_duration (snake_case) se existir
     if (slotDuration) {
-      cleanData.customDuration = slotDuration;
+      cleanData.custom_duration = slotDuration;
+    } else if (customDuration) {
+      cleanData.custom_duration = customDuration;
     }
 
     return cleanData;
