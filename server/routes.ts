@@ -11,7 +11,7 @@ import { ClientService } from "./services/client-service";
 import { sanitizeUserData, applySanitization } from "./utils/dataSanitizer";
 import { authSanitizationMiddleware, publicApiSanitizationMiddleware } from "./middleware/sanitization";
 import { setAuthCookies, clearAuthCookies, authenticateJWT, requireSuperAdmin, requireAnyAdmin } from "./utils/jwt";
-import { applyAuthSecurity, applySecurity, apiRateLimit } from "./middleware/security";
+import { applyAuthSecurity, applySecurity, apiRateLimit, intelligentLoginRateLimit, recordLoginAttempt } from "./middleware/security";
 import { decryptLoginMiddleware, sanitizeLoginLogs } from "./utils/encryption";
 import { asaasService } from "./asaas-service";
 
@@ -93,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
   
   // Login endpoint - Now supports both users and clients
-  app.post("/api/auth/login", applyAuthSecurity(), async (req: Request, res: Response) => {
+  app.post("/api/auth/login", intelligentLoginRateLimit, async (req: Request, res: Response) => {
     try {
       const result = loginSchema.safeParse(req.body);
       
@@ -119,8 +119,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (!user) {
+        // Registrar tentativa de login falhada
+        recordLoginAttempt(false)(req, res, () => {});
+
         return res.status(401).json({
-          message: "Credenciais inválidas. Verifique seu e-mail e senha."
+          message: "Credenciais inválidas. Verifique seu e-mail e senha.",
+          code: "INVALID_CREDENTIALS"
         });
       }
 
@@ -193,15 +197,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: userWithoutPassword.isActive
       });
 
+      // Registrar tentativa de login bem-sucedida
+      recordLoginAttempt(true)(req, res, () => {});
+
       // IMPORTANTE: Não retornar token no JSON - apenas status de sucesso
       res.json({
         status: 'success',
         message: `Login realizado com sucesso! Bem-vindo, ${userType}.`,
         user: sanitizedUser
       });
-      
+
     } catch (error) {
       console.error("Login error:", error);
+
+      // Registrar tentativa de login falhada
+      recordLoginAttempt(false)(req, res, () => {});
+
       res.status(500).json({ message: "Erro interno do servidor" });
     }
   });

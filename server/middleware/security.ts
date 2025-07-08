@@ -3,6 +3,11 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 
 /**
+ * Store para rastrear tentativas de login por IP
+ */
+const loginAttempts = new Map<string, { count: number; firstAttempt: number; blocked: boolean }>();
+
+/**
  * Middleware de segurança completo para produção
  * Implementa todas as práticas de segurança necessárias
  */
@@ -12,12 +17,14 @@ import helmet from 'helmet';
  */
 export const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // Máximo 5 tentativas por IP
+  max: 10, // Máximo 10 tentativas por IP (mais realista)
   message: {
     error: 'Muitas tentativas de login',
-    message: 'Tente novamente em 15 minutos',
-    code: 'RATE_LIMIT_EXCEEDED',
-    retryAfter: 15 * 60 // segundos
+    message: 'Você excedeu o limite de tentativas de login. Tente novamente em 15 minutos.',
+    code: 'LOGIN_RATE_LIMIT_EXCEEDED',
+    retryAfter: 15 * 60, // segundos
+    maxAttempts: 10,
+    windowMinutes: 15
   },
   standardHeaders: true, // Retorna rate limit info nos headers
   legacyHeaders: false, // Desabilita headers X-RateLimit-*
@@ -27,6 +34,18 @@ export const loginRateLimit = rateLimit({
   keyGenerator: (req) => {
     // Usar IP real considerando proxies
     return req.ip || req.connection.remoteAddress || 'unknown';
+  },
+  // Handler customizado para resposta mais amigável
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Limite de tentativas de login excedido',
+      message: 'Por segurança, você deve aguardar 15 minutos antes de tentar fazer login novamente.',
+      code: 'LOGIN_RATE_LIMIT_EXCEEDED',
+      retryAfter: 15 * 60,
+      maxAttempts: 10,
+      windowMinutes: 15,
+      tip: 'Verifique se você está digitando a senha corretamente.'
+    });
   }
 });
 
@@ -35,15 +54,129 @@ export const loginRateLimit = rateLimit({
  */
 export const apiRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // 100 requests por IP
+  max: 500, // 500 requests por IP (mais generoso para uso normal)
   message: {
     error: 'Muitas requisições',
-    message: 'Limite de requisições excedido',
-    code: 'API_RATE_LIMIT_EXCEEDED'
+    message: 'Você excedeu o limite de requisições. Tente novamente em alguns minutos.',
+    code: 'API_RATE_LIMIT_EXCEEDED',
+    retryAfter: 15 * 60,
+    maxRequests: 500,
+    windowMinutes: 15
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  // Handler customizado
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Limite de requisições excedido',
+      message: 'Você fez muitas requisições em pouco tempo. Aguarde 15 minutos e tente novamente.',
+      code: 'API_RATE_LIMIT_EXCEEDED',
+      retryAfter: 15 * 60,
+      maxRequests: 500,
+      windowMinutes: 15,
+      tip: 'Este limite protege o sistema contra uso excessivo.'
+    });
+  }
 });
+
+/**
+ * Rate limiting inteligente para login com escalação
+ * 1-3 tentativas: Sem delay
+ * 4-6 tentativas: 1 minuto de delay
+ * 7-10 tentativas: 5 minutos de delay
+ * 11+ tentativas: 15 minutos de delay
+ */
+export function intelligentLoginRateLimit(req: Request, res: Response, next: NextFunction) {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutos
+
+  // Limpar tentativas antigas
+  for (const [key, data] of loginAttempts.entries()) {
+    if (now - data.firstAttempt > windowMs) {
+      loginAttempts.delete(key);
+    }
+  }
+
+  let attempts = loginAttempts.get(ip);
+
+  if (!attempts) {
+    attempts = { count: 0, firstAttempt: now, blocked: false };
+    loginAttempts.set(ip, attempts);
+  }
+
+  // Verificar se está bloqueado
+  if (attempts.blocked) {
+    const timeLeft = Math.ceil((attempts.firstAttempt + windowMs - now) / 1000 / 60);
+    return res.status(429).json({
+      error: 'IP temporariamente bloqueado',
+      message: `Muitas tentativas de login falharam. Tente novamente em ${timeLeft} minutos.`,
+      code: 'IP_BLOCKED',
+      retryAfter: Math.ceil((attempts.firstAttempt + windowMs - now) / 1000),
+      timeLeftMinutes: timeLeft
+    });
+  }
+
+  // Verificar limites escalonados
+  if (attempts.count >= 10) {
+    attempts.blocked = true;
+    return res.status(429).json({
+      error: 'Limite máximo de tentativas excedido',
+      message: 'Você excedeu o limite máximo de tentativas de login. Aguarde 15 minutos.',
+      code: 'MAX_ATTEMPTS_EXCEEDED',
+      retryAfter: 15 * 60,
+      maxAttempts: 10
+    });
+  }
+
+  // Delays escalonados
+  let delayMs = 0;
+  if (attempts.count >= 7) {
+    delayMs = 5 * 60 * 1000; // 5 minutos
+  } else if (attempts.count >= 4) {
+    delayMs = 1 * 60 * 1000; // 1 minuto
+  }
+
+  if (delayMs > 0) {
+    const lastAttempt = attempts.firstAttempt + (attempts.count * 30000); // Estimar último attempt
+    const timeLeft = Math.ceil((lastAttempt + delayMs - now) / 1000);
+
+    if (timeLeft > 0) {
+      return res.status(429).json({
+        error: 'Aguarde antes de tentar novamente',
+        message: `Aguarde ${Math.ceil(timeLeft / 60)} minutos antes da próxima tentativa.`,
+        code: 'TEMPORARY_DELAY',
+        retryAfter: timeLeft,
+        attempt: attempts.count + 1,
+        maxAttempts: 10
+      });
+    }
+  }
+
+  next();
+}
+
+/**
+ * Middleware para registrar tentativa de login (sucesso ou falha)
+ */
+export function recordLoginAttempt(success: boolean) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+
+    if (success) {
+      // Login bem-sucedido, limpar tentativas
+      loginAttempts.delete(ip);
+    } else {
+      // Login falhado, incrementar contador
+      const attempts = loginAttempts.get(ip);
+      if (attempts) {
+        attempts.count++;
+      }
+    }
+
+    next();
+  };
+}
 
 /**
  * Configuração do Helmet para headers de segurança
