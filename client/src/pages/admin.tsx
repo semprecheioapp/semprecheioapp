@@ -306,8 +306,8 @@ const AdminEmpresa: React.FC = () => {
 
   // Componente Sidebar reutilizável
   const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
-    <div className="flex flex-col h-full">
-      <div className="p-4 flex-1">
+    <div className="flex flex-col h-full max-h-screen">
+      <div className="p-4 flex-1 overflow-y-auto min-h-0">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">
             {currentClient.name}
@@ -389,7 +389,7 @@ const AdminEmpresa: React.FC = () => {
       </div>
 
       {/* Footer da sidebar */}
-      <div className="p-4 border-t border-gray-300">
+      <div className="p-4 border-t border-gray-300 flex-shrink-0 bg-gray-100 dark:bg-gray-800">
         <div className="text-xs text-gray-500 mb-3">
           <p className="font-medium">{user.name}</p>
           <p>{user.email}</p>
@@ -403,7 +403,7 @@ const AdminEmpresa: React.FC = () => {
           variant="outline"
           size="sm"
           onClick={handleLogout}
-          className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+          className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 min-h-[48px]"
         >
           <LogOut className="mr-2 h-4 w-4" />
           Sair
@@ -421,11 +421,13 @@ const AdminEmpresa: React.FC = () => {
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="w-full sm:w-80 bg-gray-100 p-0 max-w-none h-full">
+        <SheetContent side="left" className="w-full sm:w-80 bg-gray-100 p-0 max-w-none h-full flex flex-col overflow-hidden">
           <SheetHeader className="sr-only">
             <SheetTitle>Menu de Navegação</SheetTitle>
           </SheetHeader>
-          <SidebarContent onClose={() => setMobileMenuOpen(false)} />
+          <div className="flex flex-col h-full overflow-hidden">
+            <SidebarContent onClose={() => setMobileMenuOpen(false)} />
+          </div>
         </SheetContent>
       </Sheet>
 

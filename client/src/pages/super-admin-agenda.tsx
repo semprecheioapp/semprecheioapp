@@ -1719,8 +1719,8 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
 
   // Componente Sidebar reutilizável
   const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
-    <div className="flex flex-col h-full">
-      <div className="p-4 flex-1">
+    <div className="flex flex-col h-full max-h-screen">
+      <div className="p-4 flex-1 overflow-y-auto min-h-0">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">SempreCheioApp</h1>
           <div className="flex items-center space-x-2">
@@ -1800,10 +1800,10 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
       </div>
       
       {/* Botão de Logout */}
-      <div className="p-4 border-t border-gray-300">
+      <div className="p-4 border-t border-gray-300 flex-shrink-0 bg-gray-100 dark:bg-gray-800">
         <Button
           variant="ghost"
-          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 min-h-[48px]"
           onClick={() => {
             setShowLogoutConfirm(true);
           }}
@@ -1827,11 +1827,13 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="w-full sm:w-80 bg-gray-100 p-0 max-w-none h-full">
+        <SheetContent side="left" className="w-full sm:w-80 bg-gray-100 p-0 max-w-none h-full flex flex-col overflow-hidden">
           <SheetHeader className="sr-only">
             <SheetTitle>Menu de Navegação</SheetTitle>
           </SheetHeader>
-          <SidebarContent onClose={() => setMobileMenuOpen(false)} />
+          <div className="flex flex-col h-full overflow-hidden">
+            <SidebarContent onClose={() => setMobileMenuOpen(false)} />
+          </div>
         </SheetContent>
       </Sheet>
 

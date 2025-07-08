@@ -397,6 +397,22 @@
       display: none;
     }
 
+    /* Sheet mobile scroll improvements */
+    [data-radix-sheet-content] {
+      overflow: hidden !important;
+    }
+
+    [data-radix-sheet-content] > div {
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+
+    [data-radix-sheet-content] > div::-webkit-scrollbar {
+      display: none !important;
+    }
+
     button, [role="button"] {
       min-height: 48px;
       padding: 0.75rem 1rem;
