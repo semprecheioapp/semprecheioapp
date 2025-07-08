@@ -252,7 +252,7 @@ const ProfessionalsManagementAdmin: React.FC<ProfessionalsManagementAdminProps> 
 Meu e-mail: ${userEmail}
 Quantidade desejada: ${requestedQuantity}`;
     
-    const whatsappUrl = `https://wa.me/5511999999999?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/5566999618890?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     setShowWhatsAppModal(false);
   };
