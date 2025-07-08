@@ -1774,7 +1774,6 @@ export class ClientsAuthStorage implements IStorage {
         is_active: availability.isActive !== undefined ? availability.isActive : true,
         day_of_week: availability.dayOfWeek !== undefined ? availability.dayOfWeek : null,
         service_id: availability.serviceId || null,
-        specialty_id: availability.specialtyId || null,
         custom_duration: (availability as any).custom_duration || null,
       };
 
