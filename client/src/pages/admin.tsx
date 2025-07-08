@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users, Settings, UserCheck, Briefcase, Menu, X, LogOut, User, Key, Shield, Clock, Tag, BarChart3, CreditCard, TrendingUp, Building2, Download } from 'lucide-react';
+import { Calendar, Users, Settings, UserCheck, Briefcase, Menu, X, LogOut, User, Key, Shield, Clock, Tag, BarChart3, CreditCard, TrendingUp, Building2, Download, Moon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -323,8 +323,6 @@ const AdminEmpresa: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <ThemeToggle />
-
             {/* Menu de Conta - Desktop */}
             {!onClose && (
               <DropdownMenu>
@@ -347,6 +345,16 @@ const AdminEmpresa: React.FC = () => {
                   <DropdownMenuItem onClick={() => window.location.href = '/seguranca'}>
                     <Shield className="mr-2 h-4 w-4" />
                     <span>Segurança</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <div className="flex items-center justify-between w-full cursor-pointer">
+                      <div className="flex items-center">
+                        <Moon className="mr-2 h-4 w-4" />
+                        <span>Tema</span>
+                      </div>
+                      <ThemeToggle />
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
@@ -467,7 +475,6 @@ const AdminEmpresa: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative">
@@ -488,6 +495,16 @@ const AdminEmpresa: React.FC = () => {
                 <DropdownMenuItem onClick={() => window.location.href = '/seguranca'}>
                   <Shield className="mr-2 h-4 w-4" />
                   <span>Segurança</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <div className="flex items-center justify-between w-full cursor-pointer">
+                    <div className="flex items-center">
+                      <Moon className="mr-2 h-4 w-4" />
+                      <span>Tema</span>
+                    </div>
+                    <ThemeToggle />
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-red-600" onClick={handleLogout}>

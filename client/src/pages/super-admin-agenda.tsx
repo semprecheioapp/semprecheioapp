@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Search, Plus, Settings, Users, Briefcase, Building2, Bot, UserCog, Filter, Menu, X, LogOut, Edit, Trash2, Mail, Phone, ChevronLeft, ChevronRight, MessageSquare, Tag, Clock, User, Key, Shield, BarChart3, CreditCard } from "lucide-react";
+import { Calendar, Search, Plus, Settings, Users, Briefcase, Building2, Bot, UserCog, Filter, Menu, X, LogOut, Edit, Trash2, Mail, Phone, ChevronLeft, ChevronRight, MessageSquare, Tag, Clock, User, Key, Shield, BarChart3, CreditCard, Moon } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import WhatsAppChannels from "./whatsapp-channels";
 import AIAgent from "./ai-agent";
@@ -1736,8 +1736,6 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <ThemeToggle />
-
             {/* Menu de Conta - Desktop */}
             {!onClose && (
               <DropdownMenu>
@@ -1760,6 +1758,16 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
                   <DropdownMenuItem onClick={() => window.location.href = '/seguranca'}>
                     <Shield className="mr-2 h-4 w-4" />
                     <span>Segurança</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <div className="flex items-center justify-between w-full cursor-pointer">
+                      <div className="flex items-center">
+                        <Moon className="mr-2 h-4 w-4" />
+                        <span>Tema</span>
+                      </div>
+                      <ThemeToggle />
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600" onClick={() => setShowLogoutConfirm(true)}>
@@ -1877,7 +1885,6 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <ThemeToggle />
             <Button variant="ghost" size="sm">
               <Search className="w-5 h-5" />
             </Button>
@@ -1903,6 +1910,16 @@ export default function SuperAdminAgenda({ isCompanyAdmin = false, companyId }: 
                 <DropdownMenuItem onClick={() => window.location.href = '/seguranca'}>
                   <Shield className="mr-2 h-4 w-4" />
                   <span>Segurança</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <div className="flex items-center justify-between w-full cursor-pointer">
+                    <div className="flex items-center">
+                      <Moon className="mr-2 h-4 w-4" />
+                      <span>Tema</span>
+                    </div>
+                    <ThemeToggle />
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-red-600" onClick={() => setShowLogoutConfirm(true)}>
