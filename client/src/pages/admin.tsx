@@ -309,9 +309,19 @@ const AdminEmpresa: React.FC = () => {
     <div className="h-full overflow-y-auto">
       <div className="p-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-            {currentClient.name}
-          </h1>
+          <div className="flex items-center gap-3 max-w-[180px] min-w-0">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base font-bold text-gray-800 dark:text-gray-200 truncate">
+                {currentClient.name}
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Painel Admin
+              </p>
+            </div>
+          </div>
           <div className="flex items-center space-x-2">
             <ThemeToggle />
 
@@ -326,15 +336,15 @@ const AdminEmpresa: React.FC = () => {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>Admin da Empresa</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = '/perfil'}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Perfil</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = '/alterar-senha'}>
                     <Key className="mr-2 h-4 w-4" />
                     <span>Alterar Senha</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = '/seguranca'}>
                     <Shield className="mr-2 h-4 w-4" />
                     <span>Segurança</span>
                   </DropdownMenuItem>
@@ -442,9 +452,19 @@ const AdminEmpresa: React.FC = () => {
             >
               <Menu className="w-6 h-6" />
             </Button>
-            <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200">
-              {currentClient.name} - {activeSection}
-            </h1>
+            <div className="flex items-center gap-2 max-w-[200px] sm:max-w-[300px]">
+              <div className="w-6 h-6 bg-gradient-to-br from-primary to-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-4 h-4 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-200 truncate">
+                  {currentClient.name}
+                </h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {activeSection}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             <ThemeToggle />
@@ -457,15 +477,15 @@ const AdminEmpresa: React.FC = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = '/perfil'}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Perfil</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = '/alterar-senha'}>
                   <Key className="mr-2 h-4 w-4" />
                   <span>Alterar Senha</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = '/seguranca'}>
                   <Shield className="mr-2 h-4 w-4" />
                   <span>Segurança</span>
                 </DropdownMenuItem>

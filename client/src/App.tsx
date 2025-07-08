@@ -19,6 +19,9 @@ import Configuracoes from "@/pages/configuracoes";
 import ProfessionalConfig from "@/pages/professional-config";
 import ConfigProfissionais from "@/pages/config-profissionais";
 import AdminEmpresa from "@/pages/admin";
+import Perfil from "@/pages/perfil";
+import AlterarSenha from "@/pages/alterar-senha";
+import Seguranca from "@/pages/seguranca";
 
 // Componente para redirecionamento automático baseado no perfil
 function AutoRedirect() {
@@ -131,6 +134,25 @@ function Router() {
           <Route path="/dashboard" component={() => (
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          )} />
+
+          {/* Rotas de Perfil */}
+          <Route path="/perfil" component={() => (
+            <ProtectedRoute>
+              <Perfil />
+            </ProtectedRoute>
+          )} />
+
+          <Route path="/alterar-senha" component={() => (
+            <ProtectedRoute>
+              <AlterarSenha />
+            </ProtectedRoute>
+          )} />
+
+          <Route path="/seguranca" component={() => (
+            <ProtectedRoute>
+              <Seguranca />
             </ProtectedRoute>
           )} />
 
