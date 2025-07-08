@@ -820,17 +820,17 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
 
       {/* Modal de Criação/Edição */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingAvailability ? "Editar Horário" : "Novo Horário"}
             </DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Tipo de Horário */}
             <div className="space-y-2">
-              <Label>Tipo de Horário</Label>
+              <Label className="text-sm font-medium">Tipo de Horário</Label>
               <Select
                 value={scheduleType}
                 onValueChange={(value: "recurring" | "specific") => {
@@ -877,19 +877,16 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
 
             {/* Dia da Semana ou Data */}
             {scheduleType === "recurring" ? (
-              <div className="space-y-2">
-                <Label>Dias da Semana</Label>
-                <div className="text-xs text-gray-500 mb-2">
-                  Debug: scheduleType={scheduleType}, dayOfWeek={formData.dayOfWeek}, daysOfWeek={JSON.stringify(formData.daysOfWeek)}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Dias da Semana</Label>
+                <div className="grid grid-cols-2 gap-2">
                   {DAYS_OF_WEEK.map(day => {
                     const isChecked = formData.daysOfWeek?.includes(day.value) || (formData.dayOfWeek === day.value);
                     console.log(`🔍 Dia ${day.label}: isChecked=${isChecked}, dayOfWeek=${formData.dayOfWeek}, daysOfWeek=${JSON.stringify(formData.daysOfWeek)}`);
                     return (
                       <div
                         key={day.value}
-                        className={`flex items-center space-x-2 p-2 rounded border cursor-pointer transition-colors ${
+                        className={`flex items-center space-x-2 p-2 rounded border cursor-pointer transition-colors text-sm ${
                           isChecked
                             ? 'bg-blue-50 border-blue-300'
                             : 'bg-white border-gray-200 hover:bg-gray-50'
@@ -965,106 +962,103 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
               </div>
             )}
 
-            {/* Duração do Slot */}
-            <div className="space-y-2">
-              <Label>Duração dos Slots</Label>
-              <Select
-                value={formData.slotDuration.toString()}
-                onValueChange={(value) => {
-                  const duration = parseInt(value);
-                  // Validação: deve ser múltiplo de 5 minutos
-                  if (duration % 5 === 0) {
-                    setFormData(prev => ({ ...prev, slotDuration: duration }));
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5 minutos</SelectItem>
-                  <SelectItem value="10">10 minutos</SelectItem>
-                  <SelectItem value="15">15 minutos</SelectItem>
-                  <SelectItem value="20">20 minutos</SelectItem>
-                  <SelectItem value="30">30 minutos</SelectItem>
-                  <SelectItem value="45">45 minutos</SelectItem>
-                  <SelectItem value="60">1 hora</SelectItem>
-                  <SelectItem value="90">1 hora e 30 minutos</SelectItem>
-                  <SelectItem value="120">2 horas</SelectItem>
-                  <SelectItem value="180">3 horas</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                Define a duração de cada slot de atendimento. Slots menores permitem maior flexibilidade de agendamento.
-              </p>
-            </div>
+            {/* Duração e Serviço em Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Duração do Slot */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Duração dos Slots</Label>
+                <Select
+                  value={formData.slotDuration.toString()}
+                  onValueChange={(value) => {
+                    const duration = parseInt(value);
+                    // Validação: deve ser múltiplo de 5 minutos
+                    if (duration % 5 === 0) {
+                      setFormData(prev => ({ ...prev, slotDuration: duration }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 min</SelectItem>
+                    <SelectItem value="10">10 min</SelectItem>
+                    <SelectItem value="15">15 min</SelectItem>
+                    <SelectItem value="20">20 min</SelectItem>
+                    <SelectItem value="30">30 min</SelectItem>
+                    <SelectItem value="45">45 min</SelectItem>
+                    <SelectItem value="60">1 hora</SelectItem>
+                    <SelectItem value="90">1h 30min</SelectItem>
+                    <SelectItem value="120">2 horas</SelectItem>
+                    <SelectItem value="180">3 horas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Serviço Associado - Campo obrigatório */}
-            <div className="space-y-2">
-              <Label>Serviço Associado *</Label>
-              <Select
-                value={formData.serviceId || ""}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, serviceId: value }))}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um serviço" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(servicesData) && servicesData.length > 0 ? (
-                    servicesData.map((service: any) => (
-                      <SelectItem key={service.id} value={service.id}>
-                        {service.name}
+              {/* Serviço Associado - Campo obrigatório */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Serviço Associado *</Label>
+                <Select
+                  value={formData.serviceId || ""}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, serviceId: value }))}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um serviço" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(servicesData) && servicesData.length > 0 ? (
+                      servicesData.map((service: any) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="" disabled>
+                        {servicesError ? "Erro ao carregar serviços" : "Nenhum serviço disponível"}
                       </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="" disabled>
-                      {servicesError ? "Erro ao carregar serviços" : "Nenhum serviço disponível"}
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                Selecione o serviço que será oferecido neste horário.
-              </p>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
 
 
             {/* Horários */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Hora Início</Label>
-                <Input
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Hora Fim</Label>
-                <Input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                  required
-                />
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Horário de Funcionamento</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-600">Hora Início</Label>
+                  <Input
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-600">Hora Fim</Label>
+                  <Input
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                    required
+                  />
+                </div>
               </div>
             </div>
 
             {/* Intervalo de Almoço/Pausa (Opcional) */}
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
-                <Label className="text-base font-medium">Intervalo de Almoço/Pausa</Label>
+                <Label className="text-sm font-medium">Intervalo de Almoço/Pausa</Label>
                 <Badge variant="outline" className="text-xs">Opcional</Badge>
               </div>
-              <p className="text-sm text-gray-600">
-                Define um período onde não serão gerados slots de agendamento (ex: horário de almoço)
-              </p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Início do Intervalo</Label>
+                  <Label className="text-xs text-gray-600">Início do Intervalo</Label>
                   <Input
                     type="time"
                     value={formData.breakStartTime || ''}
@@ -1073,7 +1067,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Fim do Intervalo</Label>
+                  <Label className="text-xs text-gray-600">Fim do Intervalo</Label>
                   <Input
                     type="time"
                     value={formData.breakEndTime || ''}
@@ -1083,11 +1077,9 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                 </div>
               </div>
               {formData.breakStartTime && formData.breakEndTime && (
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  <p className="text-sm text-orange-800">
-                    ⏰ <strong>Intervalo configurado:</strong> {formData.breakStartTime} às {formData.breakEndTime}
-                    <br />
-                    <span className="text-orange-600">Nenhum slot será gerado durante este período.</span>
+                <div className="bg-orange-50 p-2 rounded-lg">
+                  <p className="text-xs text-orange-800">
+                    ⏰ <strong>Intervalo:</strong> {formData.breakStartTime} às {formData.breakEndTime} (slots inativos)
                   </p>
                 </div>
               )}
@@ -1096,8 +1088,8 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
             {/* Preview dos Slots */}
             {formData.startTime && formData.endTime && (
               <div className="space-y-2">
-                <Label>Preview dos Slots que serão criados:</Label>
-                <div className="p-3 bg-gray-50 rounded-lg max-h-32 overflow-y-auto">
+                <Label className="text-sm font-medium">Preview dos Slots</Label>
+                <div className="p-3 bg-gray-50 rounded-lg max-h-24 overflow-y-auto">
                   <div className="flex flex-wrap gap-1">
                     {(() => {
                       const slots = generateTimeSlots(
@@ -1134,12 +1126,12 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                         ? formData.daysOfWeek.length
                         : (formData.dayOfWeek !== undefined ? 1 : 0);
 
-                      let result = `${activeSlots} slots ativos`;
+                      let result = `${activeSlots} ativos`;
                       if (inactiveSlots > 0) {
-                        result += ` + ${inactiveSlots} slots inativos (intervalo)`;
+                        result += ` + ${inactiveSlots} inativos`;
                       }
                       if (selectedDays > 1) {
-                        result += ` × ${selectedDays} dias = ${(activeSlots + inactiveSlots) * selectedDays} slots totais`;
+                        result += ` × ${selectedDays} dias = ${(activeSlots + inactiveSlots) * selectedDays} total`;
                       }
                       return result;
                     })()}
@@ -1149,12 +1141,13 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
             )}
 
             {/* Botões */}
-            <div className="flex space-x-2 pt-4">
+            <div className="flex space-x-3 pt-2 border-t">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setShowModal(false)}
                 className="flex-1"
+                size="sm"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancelar
@@ -1163,6 +1156,7 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
                 type="submit"
                 disabled={createAvailabilityMutation.isPending || updateAvailabilityMutation.isPending}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
+                size="sm"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {editingAvailability ? "Atualizar" : "Salvar"}
