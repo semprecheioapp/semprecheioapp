@@ -451,15 +451,21 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
         });
       });
 
+      // Debug: Verificar dados antes de enviar
+      console.log("🔍 Slots a serem criados:", slotsToCreate);
+      console.log("🔍 Total de slots:", slotsToCreate.length);
+
       // Criar todos os slots
       Promise.all(
-        slotsToCreate.map(slotData =>
-          fetch("/api/professional-availability", {
+        slotsToCreate.map(slotData => {
+          console.log("🔍 Enviando slot:", slotData);
+          return fetch("/api/professional-availability", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: 'include',
             body: JSON.stringify(slotData),
-          })
-        )
+          });
+        })
       ).then(responses => {
         const failedRequests = responses.filter(r => !r.ok);
         if (failedRequests.length > 0) {
@@ -828,23 +834,34 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
               <Select
                 value={scheduleType}
                 onValueChange={(value: "recurring" | "specific") => {
+                  console.log("🔍 Mudando scheduleType para:", value);
                   setScheduleType(value);
                   if (value === "recurring") {
-                    setFormData(prev => ({
-                      ...prev,
-                      date: undefined,
-                      dayOfWeek: 1,
-                      daysOfWeek: [1] // Iniciar com segunda-feira selecionada
-                    }));
+                    console.log("🔍 Configurando para recorrente");
+                    setFormData(prev => {
+                      const newData = {
+                        ...prev,
+                        date: undefined,
+                        dayOfWeek: 1,
+                        daysOfWeek: [1] // Iniciar com segunda-feira selecionada
+                      };
+                      console.log("🔍 Novo formData (recorrente):", newData);
+                      return newData;
+                    });
                   } else {
+                    console.log("🔍 Configurando para data específica");
                     // Para data específica, remover dayOfWeek e definir data
                     const today = new Date().toISOString().split('T')[0];
-                    setFormData(prev => ({
-                      ...prev,
-                      dayOfWeek: undefined,
-                      daysOfWeek: undefined,
-                      date: today
-                    }));
+                    setFormData(prev => {
+                      const newData = {
+                        ...prev,
+                        dayOfWeek: undefined,
+                        daysOfWeek: undefined,
+                        date: today
+                      };
+                      console.log("🔍 Novo formData (específica):", newData);
+                      return newData;
+                    });
                   }
                 }}
               >
@@ -862,9 +879,13 @@ export default function ConfigProfissionais({ isCompanyAdmin = false, companyId 
             {scheduleType === "recurring" ? (
               <div className="space-y-2">
                 <Label>Dias da Semana</Label>
+                <div className="text-xs text-gray-500 mb-2">
+                  Debug: scheduleType={scheduleType}, dayOfWeek={formData.dayOfWeek}, daysOfWeek={JSON.stringify(formData.daysOfWeek)}
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   {DAYS_OF_WEEK.map(day => {
                     const isChecked = formData.daysOfWeek?.includes(day.value) || (formData.dayOfWeek === day.value);
+                    console.log(`🔍 Dia ${day.label}: isChecked=${isChecked}, dayOfWeek=${formData.dayOfWeek}, daysOfWeek=${JSON.stringify(formData.daysOfWeek)}`);
                     return (
                       <div
                         key={day.value}
