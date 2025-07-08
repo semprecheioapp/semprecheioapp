@@ -267,21 +267,7 @@
   }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 @layer utilities {
   /* Mobile-first grid */
@@ -390,163 +376,32 @@
     @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
-  /* Custom Scrollbar Styles */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-  }
 
-  .scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
-    background-color: #9ca3af;
-    border-radius: 6px;
-  }
 
-  .scrollbar-track-gray-200::-webkit-scrollbar-track {
-    background-color: #e5e7eb;
-  }
 
-  .scrollbar-thumb-gray-600::-webkit-scrollbar-thumb {
-    background-color: #4b5563;
-    border-radius: 6px;
-  }
 
-  .scrollbar-track-gray-800::-webkit-scrollbar-track {
-    background-color: #1f2937;
-  }
-
-  /* Webkit scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #e5e7eb;
-    border-radius: 6px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #9ca3af;
-    border-radius: 6px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
-  }
-
-  /* Dark mode scrollbar */
-  .dark ::-webkit-scrollbar-track {
-    background: #1f2937;
-  }
-
-  .dark ::-webkit-scrollbar-thumb {
-    background: #4b5563;
-  }
-
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
-  }
-
-  /* Mobile responsive scrolling */
+  /* Mobile responsive improvements */
   @media (max-width: 768px) {
     .overflow-auto {
       -webkit-overflow-scrolling: touch;
     }
 
-    /* Mobile modal improvements */
-    [data-radix-dialog-content] {
-      max-height: 90vh !important;
-      overflow-y: auto !important;
-      margin: 1rem !important;
-      width: calc(100vw - 2rem) !important;
-      max-width: none !important;
-    }
-
-    /* Mobile sheet improvements */
-    [data-radix-sheet-content] {
-      width: 100vw !important;
-      max-width: none !important;
-      height: 100vh !important;
-    }
-
-    /* Better touch targets */
     button, [role="button"] {
-      min-height: 48px !important;
-      padding: 0.75rem 1rem !important;
+      min-height: 48px;
+      padding: 0.75rem 1rem;
     }
 
-    /* Responsive text inputs */
     input, textarea, select {
-      font-size: 16px !important; /* Prevents zoom on iOS */
-      min-height: 48px !important;
+      font-size: 16px;
+      min-height: 48px;
     }
 
-    /* Mobile table improvements */
-    table {
-      font-size: 0.875rem;
-    }
-
-    th, td {
-      padding: 0.5rem !important;
-      white-space: nowrap;
-    }
-
-    /* Mobile card improvements */
-    .card {
-      margin: 0.5rem !important;
-      border-radius: 0.75rem !important;
-    }
-
-    /* Mobile grid improvements */
-    .grid {
-      gap: 0.75rem !important;
-    }
-
-    /* Mobile spacing improvements */
-    .space-y-6 > * + * {
-      margin-top: 1rem !important;
-    }
-
-    .space-y-4 > * + * {
-      margin-top: 0.75rem !important;
-    }
-
-    /* Mobile padding improvements */
     .p-6 {
-      padding: 1rem !important;
+      padding: 1rem;
     }
 
     .p-8 {
-      padding: 1.5rem !important;
-    }
-
-    /* Mobile text size improvements */
-    .text-3xl {
-      font-size: 1.5rem !important;
-      line-height: 2rem !important;
-    }
-
-    .text-2xl {
-      font-size: 1.25rem !important;
-      line-height: 1.75rem !important;
-    }
-
-    /* Mobile sidebar improvements */
-    .sidebar-mobile {
-      transform: translateX(-100%);
-      transition: transform 0.3s ease-in-out;
-    }
-
-    .sidebar-mobile.open {
-      transform: translateX(0);
-    }
-
-    /* Better spacing for mobile */
-    .space-y-4 > * + * {
-      margin-top: 1rem !important;
-    }
-
-    .space-y-6 > * + * {
-      margin-top: 1.5rem !important;
+      padding: 1.5rem;
     }
   }
 }
