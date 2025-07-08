@@ -1758,15 +1758,24 @@ export class ClientsAuthStorage implements IStorage {
     try {
       console.log("🔍 DEBUG - Dados recebidos no storage:", availability);
 
+      // Para horários recorrentes (dayOfWeek definido), usar uma data padrão
+      // Para horários específicos (date definido), usar a data fornecida
+      let dateToUse = availability.date;
+      if (!dateToUse && availability.dayOfWeek !== undefined) {
+        // Para horários recorrentes, usar uma data padrão (hoje)
+        dateToUse = new Date().toISOString().split('T')[0];
+      }
+
       const insertData = {
         professional_id: availability.professionalId,
-        date: availability.date || null,
+        date: dateToUse, // Campo obrigatório
         start_time: availability.startTime,
         end_time: availability.endTime,
         is_active: availability.isActive !== undefined ? availability.isActive : true,
         day_of_week: availability.dayOfWeek !== undefined ? availability.dayOfWeek : null,
         service_id: availability.serviceId || null,
         specialty_id: availability.specialtyId || null,
+        custom_duration: (availability as any).slotDuration || (availability as any).customDuration || null,
       };
 
       console.log("🔍 DEBUG - Dados que serão inseridos no banco:", insertData);

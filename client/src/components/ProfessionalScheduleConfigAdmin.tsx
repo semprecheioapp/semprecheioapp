@@ -106,7 +106,13 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
 
   // Função para limpar campos que não devem ir para o backend
   const cleanDataForBackend = (data: any) => {
-    const { breakStartTime, breakEndTime, daysOfWeek, ...cleanData } = data;
+    const { breakStartTime, breakEndTime, daysOfWeek, slotDuration, ...cleanData } = data;
+
+    // Converter slotDuration para customDuration se existir
+    if (slotDuration) {
+      cleanData.customDuration = slotDuration;
+    }
+
     return cleanData;
   };
 
@@ -279,13 +285,13 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
     setFormData({
       professionalId: "",
       startTime: "09:00",
-      endTime: "18:00",
+      endTime: "16:00", // Teste: 09:00-16:00
       slotDuration: 60,
       isActive: true,
       dayOfWeek: 1,
       daysOfWeek: [1],
-      breakStartTime: undefined, // Intervalo opcional
-      breakEndTime: undefined, // Intervalo opcional
+      breakStartTime: "11:00", // Teste: intervalo 11:00-13:00
+      breakEndTime: "13:00",
     });
   };
 
@@ -323,10 +329,25 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log("🔍 Admin - handleSubmit iniciado");
+    console.log("🔍 Admin - FormData completo:", formData);
+    console.log("🔍 Admin - ScheduleType:", scheduleType);
+
     if (!formData.professionalId) {
+      console.log("🔍 Admin - Erro: Profissional não selecionado");
       toast({
         title: "Erro",
         description: "Selecione um profissional.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.serviceId) {
+      console.log("🔍 Admin - Erro: Serviço não selecionado");
+      toast({
+        title: "Erro",
+        description: "Selecione um serviço.",
         variant: "destructive",
       });
       return;
@@ -342,6 +363,9 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
       });
     } else {
       // Gerar slots individuais baseado no intervalo
+      console.log("🔍 Admin - Iniciando criação de slots");
+      console.log("🔍 Admin - FormData:", formData);
+
       const timeSlots = generateTimeSlots(
         formData.startTime,
         formData.endTime,
@@ -350,43 +374,66 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
         formData.breakEndTime
       );
 
+      console.log("🔍 Admin - TimeSlots gerados:", timeSlots);
+
       const daysToCreate = formData.daysOfWeek && formData.daysOfWeek.length > 0
         ? formData.daysOfWeek
         : (formData.dayOfWeek !== undefined ? [formData.dayOfWeek] : []);
+
+      console.log("🔍 Admin - Dias para criar:", daysToCreate);
 
       const slotsToCreate = [];
 
       // Para cada dia selecionado, criar todos os slots de tempo como linhas individuais
       daysToCreate.forEach(dayOfWeek => {
         timeSlots.forEach(slot => {
-          const slotData = cleanDataForBackend({
+          // Para horários recorrentes, usar data de hoje como referência
+          // Para horários específicos, usar a data selecionada
+          const dateToUse = scheduleType === "specific"
+            ? formData.date
+            : new Date().toISOString().split('T')[0];
+
+          const slotData = {
             professionalId: formData.professionalId,
             dayOfWeek: scheduleType === "recurring" ? dayOfWeek : undefined,
-            date: scheduleType === "specific" ? formData.date : undefined,
+            date: dateToUse, // Campo obrigatório sempre preenchido
             startTime: slot.startTime, // Hora inicial do slot individual
             endTime: slot.endTime,     // Hora final do slot individual
             isActive: slot.isActive,   // true ou false baseado no intervalo
             serviceId: formData.serviceId,
-          });
-          slotsToCreate.push(slotData);
+            slotDuration: formData.slotDuration, // Será convertido para customDuration na limpeza
+          };
+
+          // Limpar campos undefined
+          const cleanSlotData = cleanDataForBackend(slotData);
+          console.log("🔍 Admin - Slot a ser criado:", cleanSlotData);
+          slotsToCreate.push(cleanSlotData);
         });
       });
 
+      console.log("🔍 Admin - Total de slots a criar:", slotsToCreate.length);
+
       // Criar todos os slots individuais
       Promise.all(
-        slotsToCreate.map(slotData =>
-          fetch("/api/professional-availability", {
+        slotsToCreate.map(async (slotData) => {
+          console.log("🔍 Admin - Enviando slot:", slotData);
+          const response = await fetch("/api/professional-availability", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: 'include',
             body: JSON.stringify(slotData),
-          })
-        )
-      ).then(responses => {
-        const failedRequests = responses.filter(r => !r.ok);
-        if (failedRequests.length > 0) {
-          throw new Error(`${failedRequests.length} slots falharam ao ser criados`);
-        }
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("🔍 Admin - Erro na resposta:", errorText);
+            throw new Error(`Erro ao criar slot: ${response.status} - ${errorText}`);
+          }
+
+          return response.json();
+        })
+      ).then(results => {
+        console.log("🔍 Admin - Slots criados com sucesso:", results);
 
         queryClient.invalidateQueries({ queryKey: ["/api/professional-availability"] });
         setShowModal(false);
@@ -401,6 +448,7 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
           description: `${totalSlots} slots criados (${activeSlots} ativos${inactiveSlots > 0 ? `, ${inactiveSlots} inativos no intervalo` : ''}).`,
         });
       }).catch(error => {
+        console.error("🔍 Admin - Erro ao criar slots:", error);
         toast({
           title: "Erro",
           description: error.message || "Erro ao criar slots de horário.",
@@ -581,9 +629,12 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
                 <label className="text-sm font-medium">Tipo de Horário</label>
                 <select
                   value={scheduleType}
-                  onChange={(value) => {
-                    setScheduleType(value as "recurring" | "specific");
+                  onChange={(e) => {
+                    const value = e.target.value as "recurring" | "specific";
+                    console.log("🔍 Admin - Mudando scheduleType para:", value);
+                    setScheduleType(value);
                     if (value === "recurring") {
+                      console.log("🔍 Admin - Configurando para recorrente");
                       setFormData(prev => ({
                         ...prev,
                         date: undefined,
@@ -591,6 +642,7 @@ const ProfessionalScheduleConfigAdmin: React.FC<ProfessionalScheduleConfigAdminP
                         daysOfWeek: [1]
                       }));
                     } else {
+                      console.log("🔍 Admin - Configurando para data específica");
                       const today = new Date().toISOString().split('T')[0];
                       setFormData(prev => ({
                         ...prev,
